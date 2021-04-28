@@ -22,6 +22,8 @@ def inner_minimization(A: Tensor, b: Tensor, w_t: Tensor, beta: float, K: int = 
     n = A.size(0)
     p = A.size(1)
     w_t = w_t.view(p, 1)  # TODO necessary?
+    A = A.view(n, p)
+    b = b.view(n, 1)
 
     L = calc_lip_const(A, beta)
 
@@ -44,27 +46,30 @@ def inner_minimization(A: Tensor, b: Tensor, w_t: Tensor, beta: float, K: int = 
     return u_k
 
 
-def g_i_y_hat(output: Tensor, y: int, y_hat: int):
+def g_i_y_hat(output: Tensor, y_true: Tensor, y_hat: int):  # batch compatible version
     """
-    Multiclass hinge loss w.r.t. only one label
 
     :param output:
     :type output:
-    :param y:
-    :type y:
+    :param y_true: y_true "target"
+    :type y_true:
     :param y_hat:
     :type y_hat:
     :return:
     :rtype:
     """
-    # TODO this is a batch compatible version
-    # zero_one_loss = 1.0 if y != y_hat else 0.0
-    y_preds = output.argmax(-1)
-    zero_one_loss = (~torch.eq(y_preds, y)).int()
-    loss = 0
-    for idx, (y_pred, y_true) in enumerate(zip(y_preds, y)):
-        loss += zero_one_loss[idx] + output[idx][y_pred] - output[idx][y_hat]
+    zero_one_loss = (~torch.eq(output.argmax(-1), y_true)).float().squeeze(0)
+    loss = torch.tensor(0.)
+    for idx, y in enumerate(y_true):
+        loss += zero_one_loss[idx] + output[idx][y_hat] - output[idx][y]
     return loss / len(output)
+
+
+def g_i_y_hat2(output: Tensor, y: int, y_hat: int):
+    # Multiclass hinge loss w.r.t. only one label
+    output = output.squeeze()
+    zero_one_loss = 1.0 if y != y_hat else 0.0
+    return zero_one_loss + output[y_hat] - output[y]
 
 
 def prepare_fdpg_multiclass_classification(model: nn.Module, output: Tensor, classes: list, y_true: int) -> (Tensor, Tensor, Tensor):

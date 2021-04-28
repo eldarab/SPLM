@@ -11,5 +11,4 @@ class MulticlassHingeLoss(nn.Module):
         self.margin = margin
 
     def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
-        return multiclass_hinge_loss(inputs=inputs, targets=targets,
-                                     num_classes=self.num_classes, margin=self.margin)
+        return multiclass_hinge_loss(inputs, targets)

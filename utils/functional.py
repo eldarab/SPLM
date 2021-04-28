@@ -3,16 +3,32 @@ import torch.nn as nn
 from torch import Tensor
 
 
-def multiclass_hinge_loss(outputs, targets, num_classes, margin):
-    """
+def multiclass_hinge_loss(outputs: Tensor, targets: Tensor):
+    # Implements the loss presented in this paper
+    # https://www.jmlr.org/papers/volume2/crammer01a/crammer01a.pdf
+    if not (targets.dtype == torch.int or
+            targets.dtype == torch.int8 or
+            targets.dtype == torch.int16 or
+            targets.dtype == torch.int32 or
+            targets.dtype == torch.int64):
+        raise RuntimeError(f"Targets tensor dtype must be some integer type, got {targets.dtype}")
+    if len(targets.size()) >= 2:
+        raise RuntimeError(f"targets must have at most 1 dimensions. targets dim is instead {len(targets.size())}")
+    if len(targets.size()) == 0:
+        targets = targets.view(1, )
+    if len(outputs.size()) == 1:
+        outputs = outputs.view(1, outputs.nelement())
+    if not (outputs.shape[0] == targets.shape[0]):
+        raise RuntimeError(f"outputs and targets must have the same dim=0")
 
-    :param outputs: classifier outputs (scores)
-    :param target: index of target class
-    :param num_classes:
-    :return:
-    """
-    outputs += 1.0
-    loss = - outputs[target]
+    # targets = targets.int()
+    loss_tensor = torch.zeros(outputs.size(0))
+    for i, (output, target) in enumerate(zip(outputs, targets)):
+        res = output.clone()
+        res = res - float(res[target]) + 1
+        res[target] -= 1
+        loss_tensor[i] = res.max()
+    return loss_tensor.mean()
 
 
 def simplex_projection(v: Tensor) -> Tensor:

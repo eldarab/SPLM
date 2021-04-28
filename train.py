@@ -17,22 +17,21 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
     metrics_values['train_loss'] = []
     metrics_values['eval_loss'] = []
 
-    classes = train_loader.dataset.targets  # TODO
+    classes = [i for i in range(10)]  # TODO
     # TODO model.init_weights_normal()
 
     for epoch in range(epochs):
-        metrics_values['train_loss'].append(0)
-        for i, (x, y) in enumerate(train_loader):
+        loss = 0
+        for i, (x, y) in tqdm(enumerate(train_loader)):
             if use_cuda:
                 x = x.cuda()
                 y = y.cuda()
 
             # forward pass
-            output = model(x)
+            output = model(x.view(100, 784))
 
             # compute loss
-            loss = loss_fn(output, y)
-            metrics_values['train_loss'][-1] += loss / len(train_loader)
+            # loss += loss_fn(output, y) / len(train_loader)
 
             # optimization step
             splm_step(model, output, classes, y, beta, K)
@@ -79,40 +78,12 @@ def evaluator(model, dataloader, loss_fn, metrics_fns, metrics_values, use_cuda)
             x = x.cuda()
             y = y.cuda()
 
-        output = model(x)
+        output = model(x.view(100, 784))
 
         loss = loss_fn(output, y)
         for metric_name, metric_fn in metrics_fns.items():
-            metrics_values[mode + metric_name][-1] += metric_fn(output.argmax(-1), y) / dataloader.batch_size
+            metrics_values[mode + metric_name][-1] += metric_fn(output.argmax(-1), y) / len(dataloader)
 
-    metrics_values[mode + 'loss'].append(loss)
+    metrics_values[mode + 'loss'].append(loss.item())
 
     return metrics_values
-
-
-def multiclass_hinge_loss(outputs: Tensor, targets: Tensor):
-    # Implements the loss presented in this paper
-    # https://www.jmlr.org/papers/volume2/crammer01a/crammer01a.pdf
-    if not (targets.dtype == torch.int or
-            targets.dtype == torch.int8 or
-            targets.dtype == torch.int16 or
-            targets.dtype == torch.int32 or
-            targets.dtype == torch.int64):
-        raise RuntimeError(f"Targets tensor dtype must be some integer type, got {targets.dtype}")
-    if len(targets.size()) >= 2:
-        raise RuntimeError(f"targets must have at most 1 dimensions. targets dim is instead {len(targets.size())}")
-    if len(targets.size()) == 0:
-        targets = targets.view(1, )
-    if len(outputs.size()) == 1:
-        outputs = outputs.view(1, outputs.nelement())
-    if not (outputs.shape[0] == targets.shape[0]):
-        raise RuntimeError(f"outputs and targets must have the same dim=0")
-
-    # targets = targets.int()
-    loss_tensor = torch.zeros(outputs.size(0))
-    for i, (output, target) in enumerate(zip(outputs, targets)):
-        res = output.clone()
-        res = res - float(res[target]) + 1
-        res[target] -= 1
-        loss_tensor[i] = res.max()
-    return loss_tensor.mean()
