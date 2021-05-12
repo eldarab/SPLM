@@ -1,8 +1,9 @@
+import matplotlib.pyplot as plt
 import torch
-from sklearn.metrics import accuracy_score
 import torch.nn as nn
-from torchvision import datasets
+from sklearn.metrics import accuracy_score
 from torch.utils.data import DataLoader
+from torchvision import datasets
 from torchvision.transforms import transforms
 from tqdm import tqdm
 
@@ -16,12 +17,13 @@ if __name__ == '__main__':
     input_dim = 784
     hidden_dim = 32
     output_dim = num_classes = 10
+    # loss_fn = MulticlassHingeLoss(num_classes)
     loss_fn = nn.CrossEntropyLoss()
 
     # optimization parameters
-    epochs = 100
+    epochs = 200
     batch_size = 100
-    K = 100
+    lr = 0.005
     beta = 1000.0
     use_cuda = False
 
@@ -40,11 +42,12 @@ if __name__ == '__main__':
         torch.nn.Linear(hidden_dim, output_dim),
     )
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=train_params.lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     # TODO return type hinting
 
     # initialization
+    metrics_fns = {'accuracy': accuracy_score}
     metrics_values = {'train_' + metric_name: [] for metric_name in metrics_fns.keys()}
     metrics_values.update({'eval_' + metric_name: [] for metric_name in metrics_fns.keys()})
     metrics_values['train_loss'] = []
@@ -76,7 +79,8 @@ if __name__ == '__main__':
         metrics_values = evaluator(model, eval_loader, loss_fn, metrics_fns, metrics_values, use_cuda)
         model.train(True)
 
-        print(f"epoch={epoch}")
-        for k, v in metrics_values.items():
-            print(f"\t\t{k}={v[-1]:.3f}")
-        print()
+    for metric_name, metric_values in metrics_values.items():
+        plt.plot(metric_values)
+        plt.title(metric_name)
+        plt.xlabel('Epochs')
+        plt.show()

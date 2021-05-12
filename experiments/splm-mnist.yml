@@ -1,0 +1,15 @@
+general:
+  seed: 42
+  use_cuda: False
+model:
+  input_dim: 784
+  hidden_dim: 32
+  output_dim: 10  # must be equal to num_classes
+  num_classes: 10
+  loss: Hinge
+optim:
+  epochs: 100
+  batch_size: 100
+  optimizer: splm
+  K: 100
+  beta: 1000.0

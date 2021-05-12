@@ -1,3 +1,5 @@
+import time
+
 import torch
 from torch import nn as nn, Tensor
 from torch.utils.data import DataLoader
@@ -7,8 +9,7 @@ from datasets import SyntheticDataset
 from optimization import splm_step
 
 
-def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
-            loss_fn: nn.Module, epochs: int, metrics_fns: dict, beta: float, K: int, use_cuda=False):
+def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader, loss_fn: nn.Module, metrics_fns: dict, params):
     # TODO return type hinting
 
     # initialization
@@ -16,14 +17,16 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
     metrics_values.update({'eval_' + metric_name: [] for metric_name in metrics_fns.keys()})
     metrics_values['train_loss'] = []
     metrics_values['eval_loss'] = []
+    metrics_values['epoch_time'] = []
 
     classes = [i for i in range(10)]  # TODO
     # TODO model.init_weights_normal()
 
-    for epoch in range(epochs):
+    for epoch in range(params['optim']['epochs']):
+        t = time.time()
         loss = 0
         for i, (x, y) in tqdm(enumerate(train_loader)):
-            if use_cuda:
+            if params['general']['use_cuda']:
                 x = x.cuda()
                 y = y.cuda()
 
@@ -34,8 +37,9 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
             # loss += loss_fn(output, y) / len(train_loader)
 
             # optimization step
-            splm_step(model, output, classes, y, beta, K)
+            splm_step(model, output, classes, y, params['optim']['beta'], params['optim']['K'])
 
+        metrics_values['epoch_time'].append(time.time() - t)
         # evaluate
         metrics_values = evaluator(model, train_loader, loss_fn, metrics_fns, metrics_values, use_cuda)
         model.train(False)

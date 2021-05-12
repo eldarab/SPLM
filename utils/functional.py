@@ -92,3 +92,7 @@ def reshape_params(params, params_flattened):
         reshaped_params[-1] = reshaped_params[-1].view_as(param)
         total_elements += param.nelement()
     return reshaped_params
+
+
+def cumulative_sum(lst):
+    return [sum(lst[0:x:1]) for x in range(0, len(lst) + 1)][1:]
