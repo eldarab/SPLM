@@ -12,7 +12,7 @@ model:
   num_classes: 10
   loss: hinge
 optim:
-  epochs: 5
+  epochs: 100
   batch_size: 100
   optimizer: adam
   lr: 0.005

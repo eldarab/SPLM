@@ -22,9 +22,13 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
     classes = [i for i in range(10)]  # TODO
     # TODO model.init_weights_normal()
 
+    if params['optim']['optimizer'] == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=params['optim']['lr'])
+    else:
+        optimizer = 'splm'
+
     for epoch in range(params['optim']['epochs']):
         t = time.time()
-        loss = 0
         for i, (x, y) in tqdm(enumerate(train_loader)):
             if params['general']['use_cuda']:
                 x = x.cuda()
@@ -34,10 +38,16 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
             output = model(x.view(100, 784))
 
             # compute loss
-            # loss += loss_fn(output, y) / len(train_loader)
+            # TODO ?
 
             # optimization step
-            splm_step(model, output, classes, y, params['optim']['beta'], params['optim']['K'])
+            if params['optim']['optimizer'] == 'splm':
+                splm_step(model, output, classes, y, params['optim']['beta'], params['optim']['K'])
+            elif params['optim']['optimizer'] == 'adam':
+                loss = loss_fn(output, y) / len(train_loader)
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
         metrics_values['epoch_time'].append(time.time() - t)
         # evaluate
