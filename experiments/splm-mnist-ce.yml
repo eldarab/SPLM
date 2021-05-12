@@ -12,7 +12,7 @@ model:
   num_classes: 10
   loss: hinge
 optim:
-  epochs: 5
+  epochs: 50
   batch_size: 100
   optimizer: splm
   K: 100

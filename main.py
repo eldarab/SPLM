@@ -1,3 +1,5 @@
+import argparse
+
 import torch
 import torch.nn as nn
 import yaml
@@ -49,8 +51,18 @@ def init_loss(params: dict):
     return loss_fn
 
 
+# TODO argparse yml
 def main():
-    with open('experiments/splm-mnist.yml') as f:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--yml",
+                        type=str,
+                        required=True,
+                        help=".yml path for experiments.")
+
+    args = parser.parse_args()
+
+    with open(args.yml) as f:
         params = yaml.safe_load(f)
 
     torch.manual_seed(params['general']['seed'])
@@ -74,7 +86,7 @@ def main():
         params=params,
     )
 
-    plot_metrics(metrics, title=params['optim']['optimizer'])
+    plot_metrics(metrics, title=f"optimizer: {params['optim']['optimizer']}, loss: {params['model']['loss']}")
 
 
 if __name__ == '__main__':
