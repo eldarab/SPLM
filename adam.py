@@ -7,6 +7,7 @@ from torchvision import datasets
 from torchvision.transforms import transforms
 from tqdm import tqdm
 
+from plotting import plot_metrics
 from train import evaluator
 from utils.loss_functions import MulticlassHingeLoss
 
@@ -21,7 +22,7 @@ if __name__ == '__main__':
     loss_fn = nn.CrossEntropyLoss()
 
     # optimization parameters
-    epochs = 200
+    epochs = 100
     batch_size = 100
     lr = 0.005
     beta = 1000.0
@@ -79,8 +80,4 @@ if __name__ == '__main__':
         metrics_values = evaluator(model, eval_loader, loss_fn, metrics_fns, metrics_values, use_cuda)
         model.train(True)
 
-    for metric_name, metric_values in metrics_values.items():
-        plt.plot(metric_values)
-        plt.title(metric_name)
-        plt.xlabel('Epochs')
-        plt.show()
+    plot_metrics(metrics_values)

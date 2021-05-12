@@ -41,9 +41,9 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
 
         metrics_values['epoch_time'].append(time.time() - t)
         # evaluate
-        metrics_values = evaluator(model, train_loader, loss_fn, metrics_fns, metrics_values, use_cuda)
+        metrics_values = evaluator(model, train_loader, loss_fn, metrics_fns, metrics_values, params['general']['use_cuda'])
         model.train(False)
-        metrics_values = evaluator(model, eval_loader, loss_fn, metrics_fns, metrics_values, use_cuda)
+        metrics_values = evaluator(model, eval_loader, loss_fn, metrics_fns, metrics_values, params['general']['use_cuda'])
         model.train(True)
 
         print(f"epoch={epoch}")

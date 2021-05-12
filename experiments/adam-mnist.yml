@@ -14,6 +14,5 @@ model:
 optim:
   epochs: 5
   batch_size: 100
-  optimizer: splm
-  K: 100
-  beta: 1000.0
+  optimizer: adam
+  lr: 0.005

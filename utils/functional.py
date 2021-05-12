@@ -4,6 +4,7 @@ from torch import Tensor
 
 
 def multiclass_hinge_loss(outputs: Tensor, targets: Tensor):
+    # TODO change margin
     # Implements the loss presented in this paper
     # https://www.jmlr.org/papers/volume2/crammer01a/crammer01a.pdf
     if not (targets.dtype == torch.int or
