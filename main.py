@@ -1,4 +1,6 @@
 import argparse
+import os
+import time
 
 import torch
 import torch.nn as nn
@@ -9,6 +11,7 @@ from torchvision import datasets
 from torchvision.transforms import transforms
 
 from datasets import SyntheticDataset
+from nets.fc import FCNet
 from plotting import plot_metrics
 from train import trainer
 from utils.loss_functions import MulticlassHingeLoss
@@ -43,7 +46,8 @@ def init_data(params: dict):
 
 def init_loss(params: dict):
     if params['model']['loss'] == 'hinge':
-        loss_fn = MulticlassHingeLoss(params['model']['num_classes'])
+        margin = params['model']['margin'] if 'margin' in params['model'] else 1.
+        loss_fn = MulticlassHingeLoss(params['model']['num_classes'], margin)
     elif params['model']['loss'] == 'CE':
         loss_fn = nn.CrossEntropyLoss()
     else:
@@ -51,31 +55,37 @@ def init_loss(params: dict):
     return loss_fn
 
 
-# TODO argparse yml
+def init_experiment_folder(params: dict):
+    time_str = time.strftime('%Y_%m_%d__%H_%M_%S')
+    title = f"{params['optim']['optimizer']}_optimizer__{params['model']['loss']}_loss"
+    os.makedirs(f'./figs/{title}__{time_str}')
+    with open(f'./figs/{title}__{time_str}/params.yml', 'w') as f2:
+        yaml.safe_dump(params, f2)
+
+
 def main():
     parser = argparse.ArgumentParser()
-
-    parser.add_argument("--yml",
+    parser.add_argument("--file",
                         type=str,
                         required=True,
-                        help=".yml path for experiments.")
-
+                        help="path to .yml file for experiments.")
     args = parser.parse_args()
 
-    with open(args.yml) as f:
+    with open(args.file) as f:
         params = yaml.safe_load(f)
 
     torch.manual_seed(params['general']['seed'])
 
-    loss_fn = init_loss(params)
+    init_experiment_folder(params)
 
+    loss_fn = init_loss(params)
     train_loader, eval_loader = init_data(params)
 
-    model = torch.nn.Sequential(
-        torch.nn.Linear(params['model']['input_dim'], params['model']['hidden_dim']),
-        nn.Softplus(),
-        torch.nn.Linear(params['model']['hidden_dim'], params['model']['output_dim']),
-    )
+    model = FCNet(dims=[params['model']['input_dim'], params['model']['hidden_dim'], params['model']['output_dim']],
+                  activation=params['model']['activation'])
+
+    if torch.cuda.is_available() and params['general']['use_cuda']:
+        model.to('cuda')
 
     metrics = trainer(
         model=model,
@@ -86,7 +96,7 @@ def main():
         params=params,
     )
 
-    plot_metrics(metrics, title=f"optimizer: {params['optim']['optimizer']}, loss: {params['model']['loss']}")
+    plot_metrics(metrics, time_str, title=title)
 
 
 if __name__ == '__main__':

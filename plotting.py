@@ -1,11 +1,11 @@
 import time
-
+import os
 import matplotlib.pyplot as plt
 
-from utils.functional import cumulative_sum
+from utils.utils import cumulative_sum
 
 
-def plot_metrics(metrics, title='', delimiter='_'):
+def plot_metrics(metrics, time_str, title='', delimiter='_'):
     metric_types = {delimiter.join(metric_name.split(delimiter)[1:]) for metric_name in metrics if metric_name != 'epoch_time'}
 
     for metric in metric_types:
@@ -19,7 +19,8 @@ def plot_metrics(metrics, title='', delimiter='_'):
         plt.legend([f'train_{metric}', f'eval_{metric}'])
         plt.xlabel('epochs')
         plt.ylabel(metric)
-        plt.savefig(f'./figs/{time.time()}.png')
+        plt.savefig(f'./figs/{title}__{time_str}/{metric}_vs_epochs.png')
+        plt.clf()
 
         # vs. time
         times = cumulative_sum(metrics['epoch_time'])
@@ -29,4 +30,5 @@ def plot_metrics(metrics, title='', delimiter='_'):
         plt.legend([f'train_{metric}', f'eval_{metric}'])
         plt.xlabel('time (seconds)')
         plt.ylabel(metric)
-        plt.savefig(f'./figs/{time.time()}.png')
+        plt.savefig(f'./figs/{title}__{time_str}/{metric}_vs_time.png')
+        plt.clf()

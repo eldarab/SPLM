@@ -1,6 +1,6 @@
 general:
   seed: 42
-  use_cuda: False
+  use_cuda: True
 data:
   dataset: mnist
   train_samples: 1000
@@ -9,11 +9,12 @@ model:
   input_dim: 784
   hidden_dim: 32
   output_dim: 10  # must be equal to num_classes
+  activation: Softplus
   num_classes: 10
   loss: hinge
 optim:
-  epochs: 50
+  epochs: 100
   batch_size: 100
   optimizer: splm
-  K: 100
+  K: 50
   beta: 1000.0

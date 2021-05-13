@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from datasets import SyntheticDataset
 from optimization import splm_step
+from utils.utils import report_metrics
 
 
 def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader, loss_fn: nn.Module, metrics_fns: dict, params):
@@ -19,7 +20,7 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
     metrics_values['eval_loss'] = []
     metrics_values['epoch_time'] = []
 
-    classes = [i for i in range(10)]  # TODO
+    classes = [i for i in range(params['model']['num_classes'])]  # TODO
     # TODO model.init_weights_normal()
 
     if params['optim']['optimizer'] == 'adam':
@@ -30,12 +31,12 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
     for epoch in range(params['optim']['epochs']):
         t = time.time()
         for i, (x, y) in tqdm(enumerate(train_loader)):
-            if params['general']['use_cuda']:
+            if torch.cuda.is_available() and params['general']['use_cuda']:
                 x = x.cuda()
                 y = y.cuda()
 
             # forward pass
-            output = model(x.view(100, 784))
+            output = model(x.view(params['optim']['batch_size'], params['model']['input_dim']))
 
             # compute loss
             # TODO ?
@@ -50,21 +51,19 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
                 optimizer.step()
 
         metrics_values['epoch_time'].append(time.time() - t)
+
         # evaluate
-        metrics_values = evaluator(model, train_loader, loss_fn, metrics_fns, metrics_values, params['general']['use_cuda'])
+        metrics_values = evaluator(model, train_loader, loss_fn, metrics_fns, metrics_values, params)
         model.train(False)
-        metrics_values = evaluator(model, eval_loader, loss_fn, metrics_fns, metrics_values, params['general']['use_cuda'])
+        metrics_values = evaluator(model, eval_loader, loss_fn, metrics_fns, metrics_values, params)
         model.train(True)
 
-        print(f"epoch={epoch}")
-        for k, v in metrics_values.items():
-            print(f"\t\t{k}={v[-1]:.3f}")
-        print()
+        report_metrics(epoch, metrics_values)
 
     return metrics_values
 
 
-def evaluator(model, dataloader, loss_fn, metrics_fns, metrics_values, use_cuda):
+def evaluator(model, dataloader, loss_fn, metrics_fns, metrics_values, params):
     """
     Evaluate a model without gradient calculation
     :param metrics_fns:
@@ -88,15 +87,15 @@ def evaluator(model, dataloader, loss_fn, metrics_fns, metrics_values, use_cuda)
         metrics_values[mode + metric_name].append(0)
 
     for i, (x, y) in enumerate(dataloader):
-        if use_cuda:
+        if torch.cuda.is_available() and params['general']['use_cuda']:
             x = x.cuda()
             y = y.cuda()
 
-        output = model(x.view(100, 784))
+        output = model(x.view(params['optim']['batch_size'], params['model']['input_dim']))
 
         loss = loss_fn(output, y)
         for metric_name, metric_fn in metrics_fns.items():
-            metrics_values[mode + metric_name][-1] += metric_fn(output.argmax(-1), y) / len(dataloader)
+            metrics_values[mode + metric_name][-1] += metric_fn(output.cpu().argmax(-1), y.cpu()) / len(dataloader)
 
     metrics_values[mode + 'loss'].append(loss.item())
 

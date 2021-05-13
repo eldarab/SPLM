@@ -1,9 +1,8 @@
 import torch
-import torch.nn as nn
 from torch import Tensor
 
 
-def multiclass_hinge_loss(outputs: Tensor, targets: Tensor):
+def multiclass_hinge_loss(outputs: Tensor, targets: Tensor, margin=1.):
     # TODO change margin
     # Implements the loss presented in this paper
     # https://www.jmlr.org/papers/volume2/crammer01a/crammer01a.pdf
@@ -26,8 +25,8 @@ def multiclass_hinge_loss(outputs: Tensor, targets: Tensor):
     loss_tensor = torch.zeros(outputs.size(0))
     for i, (output, target) in enumerate(zip(outputs, targets)):
         res = output.clone()
-        res = res - float(res[target]) + 1
-        res[target] -= 1
+        res = res - float(res[target]) + margin
+        res[target] -= margin
         loss_tensor[i] = res.max()
     return loss_tensor.mean()
 
@@ -93,7 +92,3 @@ def reshape_params(params, params_flattened):
         reshaped_params[-1] = reshaped_params[-1].view_as(param)
         total_elements += param.nelement()
     return reshaped_params
-
-
-def cumulative_sum(lst):
-    return [sum(lst[0:x:1]) for x in range(0, len(lst) + 1)][1:]
