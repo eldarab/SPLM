@@ -2,33 +2,28 @@ import torch
 from torch import Tensor
 
 
-def multiclass_hinge_loss(outputs: Tensor, targets: Tensor, margin=1.):
-    # TODO change margin
-    # Implements the loss presented in this paper
-    # https://www.jmlr.org/papers/volume2/crammer01a/crammer01a.pdf
-    if not (targets.dtype == torch.int or
-            targets.dtype == torch.int8 or
-            targets.dtype == torch.int16 or
-            targets.dtype == torch.int32 or
-            targets.dtype == torch.int64):
-        raise RuntimeError(f"Targets tensor dtype must be some integer type, got {targets.dtype}")
-    if len(targets.size()) >= 2:
-        raise RuntimeError(f"targets must have at most 1 dimensions. targets dim is instead {len(targets.size())}")
-    if len(targets.size()) == 0:
-        targets = targets.view(1, )
-    if len(outputs.size()) == 1:
-        outputs = outputs.view(1, outputs.nelement())
-    if not (outputs.shape[0] == targets.shape[0]):
-        raise RuntimeError(f"outputs and targets must have the same dim=0")
+def multiclass_hinge_loss(outputs: Tensor, targets: Tensor, margin=1., reduction='mean') -> Tensor:
+    # TODO to be revisited when PyTorch implement https://www.tensorflow.org/api_docs/python/tf/map_fn
 
-    # targets = targets.int()
-    loss_tensor = torch.zeros(outputs.size(0))
-    for i, (output, target) in enumerate(zip(outputs, targets)):
-        res = output.clone()
-        res = res - float(res[target]) + margin
-        res[target] -= margin
-        loss_tensor[i] = res.max()
-    return loss_tensor.mean()
+    assert outputs.shape[0] == targets.shape[0]
+
+    batch_size = outputs.shape[0]
+    num_classes = outputs.shape[1]
+
+    # actual loss computation
+    loss = Tensor(0)
+    for x, y in zip(outputs, targets):
+        loss += (torch.relu(margin + x - x[y]).sum() - margin)
+    loss /= num_classes
+
+    if reduction == 'mean':
+        loss /= batch_size
+    elif reduction == 'sum':
+        pass
+    else:
+        raise RuntimeError(f'Unsupported reduction: "{reduction}"')
+
+    return loss
 
 
 def simplex_projection(v: Tensor) -> Tensor:
