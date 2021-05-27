@@ -1,12 +1,11 @@
 import time
 
 import torch
-from torch import nn as nn, Tensor
+from torch import nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from datasets import SyntheticDataset
-from optimization import splm_step
+from optimization import prepare_inner_minimization_multiclass_classification, SPLM
 from utils.utils import report_metrics
 
 
@@ -26,7 +25,11 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
     if params['optim']['optimizer'] == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=params['optim']['lr'])
     else:
-        optimizer = 'splm'
+        optimizer = SPLM(
+            prepare_inner_minimization_multiclass_classification,
+            K=params['optim']['K'],
+            beta=params['optim']['beta']
+        )
 
     for epoch in range(params['optim']['epochs']):
         t = time.time()
@@ -43,7 +46,7 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
 
             # optimization step
             if params['optim']['optimizer'] == 'splm':
-                splm_step(model, output, classes, y, params['optim']['beta'], params['optim']['K'])
+                optimizer.step(model=model, output=output, classes=classes, y_true=y)
             elif params['optim']['optimizer'] == 'adam':
                 loss = loss_fn(output, y) / len(train_loader)
                 optimizer.zero_grad()

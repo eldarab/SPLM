@@ -11,9 +11,10 @@ model:
   output_dim: 10  # must be equal to num_classes
   activation: Softplus
   num_classes: 10
-  loss: CE
+  loss: MultiMarginLoss
 optim:
   epochs: 20
   batch_size: 100
-  optimizer: adam
-  lr: 0.005
+  optimizer: splm
+  K: 50
+  beta: 500.0

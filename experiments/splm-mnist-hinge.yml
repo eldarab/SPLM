@@ -1,6 +1,6 @@
 general:
   seed: 42
-  use_cuda: True
+  use_cuda: False
 data:
   dataset: mnist
   train_samples: 1000
@@ -13,7 +13,7 @@ model:
   num_classes: 10
   loss: hinge
 optim:
-  epochs: 100
+  epochs: 20
   batch_size: 100
   optimizer: splm
   K: 50

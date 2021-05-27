@@ -3,25 +3,18 @@ from torch import Tensor
 
 
 def multiclass_hinge_loss(outputs: Tensor, targets: Tensor, margin=1., reduction='mean') -> Tensor:
-    # TODO to be revisited when PyTorch implement https://www.tensorflow.org/api_docs/python/tf/map_fn
-
     assert outputs.shape[0] == targets.shape[0]
-
     batch_size = outputs.shape[0]
     num_classes = outputs.shape[1]
 
-    # actual loss computation
-    loss = Tensor(0)
+    # TODO to be revisited when PyTorch implement https://www.tensorflow.org/api_docs/python/tf/map_fn
+    loss = torch.tensor(0.)
     for x, y in zip(outputs, targets):
         loss += (torch.relu(margin + x - x[y]).sum() - margin)
     loss /= num_classes
 
     if reduction == 'mean':
         loss /= batch_size
-    elif reduction == 'sum':
-        pass
-    else:
-        raise RuntimeError(f'Unsupported reduction: "{reduction}"')
 
     return loss
 
@@ -81,9 +74,27 @@ def flatten_params(params, flatten_grad=False):
 def reshape_params(params, params_flattened):
     reshaped_params = []
     total_elements = 0
-    params = [p for p in params]
     for param in params:
         reshaped_params.append(params_flattened[total_elements:total_elements + param.nelement()])
         reshaped_params[-1] = reshaped_params[-1].view_as(param)
         total_elements += param.nelement()
     return reshaped_params
+
+
+def g_i_y_hat(output: Tensor, y_true: Tensor, y_hat: int):  # batch compatible version
+    """
+
+    :param output:
+    :type output:
+    :param y_true: y_true "target"
+    :type y_true:
+    :param y_hat:
+    :type y_hat:
+    :return:
+    :rtype:
+    """
+    zero_one_loss = (~torch.eq(output.argmax(-1), y_true)).float().squeeze(0)
+    loss = torch.tensor(0.)
+    for idx, y in enumerate(y_true):
+        loss += zero_one_loss[idx] + output[idx][y_hat] - output[idx][y]
+    return loss / len(output)

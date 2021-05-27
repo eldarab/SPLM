@@ -47,9 +47,12 @@ def init_data(params: dict):
 def init_loss(params: dict):
     if params['model']['loss'] == 'hinge':
         margin = params['model']['margin'] if 'margin' in params['model'] else 1.
-        loss_fn = MulticlassHingeLoss(params['model']['num_classes'], margin)
+        loss_fn = MulticlassHingeLoss(margin)
     elif params['model']['loss'] == 'CE':
         loss_fn = nn.CrossEntropyLoss()
+    elif params['model']['loss'] == 'MultiMarginLoss':
+        margin = params['model']['margin'] if 'margin' in params['model'] else 1.
+        loss_fn = nn.MultiMarginLoss(margin=margin)
     else:
         raise RuntimeError(f'Illegal loss {params["model"]["loss"]}')
     return loss_fn
@@ -61,6 +64,7 @@ def init_experiment_folder(params: dict):
     os.makedirs(f'./figs/{title}__{time_str}')
     with open(f'./figs/{title}__{time_str}/params.yml', 'w') as f2:
         yaml.safe_dump(params, f2)
+    return time_str, title
 
 
 def main():
@@ -76,10 +80,10 @@ def main():
 
     torch.manual_seed(params['general']['seed'])
 
-    init_experiment_folder(params)
+    time_str, title = init_experiment_folder(params)
 
     loss_fn = init_loss(params)
-    train_loader, eval_loader = init_data(params)
+    train_loader, eval_loader = init_data(params)  # TODO normalize data
 
     model = FCNet(dims=[params['model']['input_dim'], params['model']['hidden_dim'], params['model']['output_dim']],
                   activation=params['model']['activation'])
@@ -96,7 +100,7 @@ def main():
         params=params,
     )
 
-    plot_metrics(metrics, time_str, title=title)
+    plot_metrics(metrics, time_str, title)
 
 
 if __name__ == '__main__':

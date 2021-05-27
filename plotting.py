@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from utils.utils import cumulative_sum
 
 
-def plot_metrics(metrics, time_str, title='', delimiter='_'):
+def plot_metrics(metrics, time_str, title, delimiter='_'):
     metric_types = {delimiter.join(metric_name.split(delimiter)[1:]) for metric_name in metrics if metric_name != 'epoch_time'}
 
     for metric in metric_types:
