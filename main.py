@@ -69,10 +69,7 @@ def init_experiment_folder(params: dict):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file",
-                        type=str,
-                        required=True,
-                        help="path to .yml file for experiments.")
+    parser.add_argument("--file", type=str, required=True, help="path to .yml file for experiments.")
     args = parser.parse_args()
 
     with open(args.file) as f:

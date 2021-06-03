@@ -26,7 +26,8 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
         optimizer = torch.optim.Adam(model.parameters(), lr=params['optim']['lr'])
     else:
         optimizer = SPLM(
-            prepare_inner_minimization_multiclass_classification,
+            params=model.parameters(),
+            prepare_inner_minimization_fn=prepare_inner_minimization_multiclass_classification,
             K=params['optim']['K'],
             beta=params['optim']['beta']
         )

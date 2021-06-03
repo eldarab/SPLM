@@ -71,10 +71,20 @@ def flatten_params(params, flatten_grad=False):
         return torch.cat([param.flatten() for param in params])
 
 
-def reshape_params(params, params_flattened):
+def reshape_params_deprecated(params, params_flattened):
     reshaped_params = []
     total_elements = 0
     for param in params:
+        reshaped_params.append(params_flattened[total_elements:total_elements + param.nelement()])
+        reshaped_params[-1] = reshaped_params[-1].view_as(param)
+        total_elements += param.nelement()
+    return reshaped_params
+
+
+def reshape_params(param_groups: dict, params_flattened):
+    reshaped_params = []
+    total_elements = 0
+    for param in param_groups['params']:
         reshaped_params.append(params_flattened[total_elements:total_elements + param.nelement()])
         reshaped_params[-1] = reshaped_params[-1].view_as(param)
         total_elements += param.nelement()

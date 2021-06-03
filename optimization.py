@@ -2,21 +2,30 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch import Tensor
+from torch.optim import Optimizer
 
 from utils.functional import simplex_projection, calc_lip_const, flatten_params, reshape_params, g_i_y_hat
 
 
-class SPLM:  # TODO inherit from Optimizer?
+class SPLM(Optimizer):
     """
     Implements SPLM algorithm.
 
     """
 
     def __init__(self, params, prepare_inner_minimization_fn, beta=500., K=50):
-        self.params = params
+        if not K > 0:
+            raise ValueError(f'Invalid K (inner minimization steps): {K}')
+        if not beta > 0.0:
+            raise ValueError(f'Invalid beta: {beta}')
+
+        defaults = dict(beta=beta, K=K)
+
         self.prepare_inner_minimization_fn = prepare_inner_minimization_fn
         self.beta = beta
         self.K = K
+
+        super(SPLM, self).__init__(params, defaults)
 
     def step(self, **inner_minimization_kwargs):
         """
@@ -31,8 +40,8 @@ class SPLM:  # TODO inherit from Optimizer?
 
         model = inner_minimization_kwargs.pop('model')
         with torch.no_grad():
-            w_t_plus_1 = self.__fdpg(A_i, b_i, w_t)  # FDPG
-            reshaped_params = reshape_params(self.params, w_t_plus_1)
+            w_t_plus_1 = self.__fdpg(A_i, b_i, w_t)
+            reshaped_params = reshape_params(self.param_groups[0], w_t_plus_1)
             for idx, param in enumerate(model.parameters()):
                 param.copy_(reshaped_params[idx])
 
@@ -78,7 +87,7 @@ class SPLM:  # TODO inherit from Optimizer?
         return u_k
 
 
-def prepare_inner_minimization_multiclass_classification(model: nn.Module, output: Tensor, classes: list, y_true: int) -> (Tensor, Tensor, Tensor):
+def prepare_inner_minimization_multiclass_classification(model: nn.Module, output: Tensor, classes: list, y_true: Tensor) -> (Tensor, Tensor, Tensor):
     """
     Initializes the matrix A^t_y and the vector b^t_y in the case of hinge loss multiclass
     classification.
