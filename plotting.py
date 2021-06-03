@@ -1,11 +1,13 @@
-import time
-import os
 import matplotlib.pyplot as plt
+import pickle
 
 from utils.utils import cumulative_sum
 
 
 def plot_metrics(metrics, time_str, title, delimiter='_'):
+    with open(f'./figs/{title}__{time_str}/metrics.pkl', 'wb') as f:
+        pickle.dump(metrics, f)
+
     metric_types = {delimiter.join(metric_name.split(delimiter)[1:]) for metric_name in metrics if metric_name != 'epoch_time'}
 
     for metric in metric_types:
