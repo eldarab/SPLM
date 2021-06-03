@@ -43,13 +43,12 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
             output = model(x.view(params['optim']['batch_size'], params['model']['input_dim']))
 
             # compute loss
-            # TODO ?
+            loss = loss_fn(output, y) / len(train_loader)
 
             # optimization step
             if params['optim']['optimizer'] == 'splm':
                 optimizer.step(model=model, output=output, classes=classes, y_true=y)
             elif params['optim']['optimizer'] == 'adam':
-                loss = loss_fn(output, y) / len(train_loader)
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
