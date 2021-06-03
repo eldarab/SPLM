@@ -27,6 +27,10 @@ class SPLM(Optimizer):
 
         super(SPLM, self).__init__(params, defaults)
 
+        # TODO Support more than 1 param group
+        if len(self.param_groups) > 1:
+            raise NotImplementedError(f'This optimizer still doesnt support more than 1 param group.')
+
     def step(self, **inner_minimization_kwargs):
         """
         Performs a single optimization step.
@@ -41,7 +45,7 @@ class SPLM(Optimizer):
         with torch.no_grad():
             w_t_plus_1 = self.__fdpg(A_i, b_i, w_t)
             reshaped_params = reshape_params(self.param_groups[0], w_t_plus_1)
-            for idx, param in enumerate(self.param_groups[0]):
+            for idx, param in enumerate(self.param_groups[0]['params']):
                 param.copy_(reshaped_params[idx])
 
     def __fdpg(self, A: Tensor, b: Tensor, w_t: Tensor) -> Tensor:
@@ -86,7 +90,11 @@ class SPLM(Optimizer):
         return u_k
 
 
-def prepare_inner_minimization_multiclass_classification(model: nn.Module, output: Tensor, classes: list, y_true: Tensor) -> (Tensor, Tensor, Tensor):
+def prepare_inner_minimization_multiclass_classification(
+        model: nn.Module,
+        output: Tensor,
+        classes: list,
+        y_true: Tensor) -> (Tensor, Tensor, Tensor):
     """
     Initializes the matrix A^t_y and the vector b^t_y in the case of hinge loss multiclass
     classification.

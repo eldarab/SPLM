@@ -46,10 +46,11 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
             loss = loss_fn(output, y) / len(train_loader)
 
             # optimization step
+            optimizer.zero_grad()
             if params['optim']['optimizer'] == 'splm':
+                # loss.backward() --- NO NEED TO DO THAT WITH SPLM!!!
                 optimizer.step(model=model, output=output, classes=classes, y_true=y)
             elif params['optim']['optimizer'] == 'adam':
-                optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
