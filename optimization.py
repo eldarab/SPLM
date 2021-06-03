@@ -38,11 +38,10 @@ class SPLM(Optimizer):
         # TODO choose matrix M
         w_t, A_i, b_i = self.prepare_inner_minimization_fn(**inner_minimization_kwargs)
 
-        model = inner_minimization_kwargs.pop('model')
         with torch.no_grad():
             w_t_plus_1 = self.__fdpg(A_i, b_i, w_t)
             reshaped_params = reshape_params(self.param_groups[0], w_t_plus_1)
-            for idx, param in enumerate(model.parameters()):
+            for idx, param in enumerate(self.param_groups[0]):
                 param.copy_(reshaped_params[idx])
 
     def __fdpg(self, A: Tensor, b: Tensor, w_t: Tensor) -> Tensor:
