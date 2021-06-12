@@ -28,8 +28,8 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
         optimizer = SPLM(
             params=model.parameters(),
             prepare_inner_minimization_fn=prepare_inner_minimization_multiclass_classification,
-            K=params['optim']['K'],
-            beta=params['optim']['beta']
+            K=int(params['optim']['K']),
+            beta=float(params['optim']['beta'])
         )
 
     for epoch in range(params['optim']['epochs']):
