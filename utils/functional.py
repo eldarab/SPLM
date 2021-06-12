@@ -104,7 +104,7 @@ def g_i_y_hat(output: Tensor, y_true: Tensor, y_hat: int):  # batch compatible v
     :rtype:
     """
     zero_one_loss = (~torch.eq(output.argmax(-1), y_true)).float().squeeze(0)
-    loss = torch.tensor(0.)
+    loss = torch.tensor(0., device='cuda')
     for idx, y in enumerate(y_true):
         loss += zero_one_loss[idx] + output[idx][y_hat] - output[idx][y]
     return loss / len(output)
