@@ -72,7 +72,7 @@ class SPLM(Optimizer):
 
         # 1. Initialization
         u_k = None
-        y_k = - torch.ones(n, 1).fill_(1 / n)
+        y_k = - torch.ones(n, 1, device='cuda').fill_(1 / n)
         t_k_next = 1
         w_k_next = y_k.clone()
 
