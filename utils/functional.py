@@ -2,13 +2,13 @@ import torch
 from torch import Tensor
 
 
-def multiclass_hinge_loss(outputs: Tensor, targets: Tensor, margin=1., reduction='mean') -> Tensor:
+def multiclass_hinge_loss(outputs: Tensor, targets: Tensor, margin=1., reduction='mean', device='cpu') -> Tensor:
     assert outputs.shape[0] == targets.shape[0]
     batch_size = outputs.shape[0]
     num_classes = outputs.shape[1]
 
     # TODO to be revisited when PyTorch implement https://www.tensorflow.org/api_docs/python/tf/map_fn
-    loss = torch.tensor(0.)
+    loss = torch.tensor(0., device='cuda')
     for x, y in zip(outputs, targets):
         loss += (torch.relu(margin + x - x[y]).sum() - margin)
     loss /= num_classes
