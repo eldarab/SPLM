@@ -13,4 +13,4 @@
 11. Fix all warnings, CTRL+ALT+L, CTRL+ALT+O
 12. Remove redundant files.
 13. Create utils __init\__
-1
+14. Summarize results in a LaTeX table and send to Shoham.
