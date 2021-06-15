@@ -30,8 +30,8 @@ def init_data(params: dict):
         eval_loader = DataLoader(synthetic_eval, batch_size=params['optim']['batch_size'], shuffle=False)
 
     elif params['data']['dataset'] == 'mnist':
-        mnist_train = datasets.MNIST("./datasets", train=True, download=False, transform=transforms.Compose([transforms.ToTensor()]))
-        mnist_test = datasets.MNIST("./datasets", train=False, download=False, transform=transforms.Compose([transforms.ToTensor()]))
+        mnist_train = datasets.MNIST("./datasets", train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
+        mnist_test = datasets.MNIST("./datasets", train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
         mnist_train.data = mnist_train.data[:params['data']['train_samples']]
         mnist_test.data = mnist_test.data[:params['data']['eval_samples']]
 

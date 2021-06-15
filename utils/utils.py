@@ -7,3 +7,10 @@ def report_metrics(epoch, metrics_values):
     for metric_name, metric_value in metrics_values.items():
         print(f"\t\t{metric_name}={metric_value[-1]:.3f}")
     print()
+
+
+def scrape_good_results(figs_path):
+    raise NotImplementedError()
+
+
+from torch.nn import LSTMCell

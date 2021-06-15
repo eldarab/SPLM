@@ -14,3 +14,4 @@
 12. Remove redundant files.
 13. Create utils __init\__
 14. Summarize results in a LaTeX table and send to Shoham.
+15. resolve all device related issues.
