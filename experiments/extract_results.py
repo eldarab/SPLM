@@ -14,7 +14,9 @@ def extract_results(root_dir='figs'):
             params = yaml.safe_load(f)
         experiment_files = os.listdir(f'{root_dir}/{experiment}')
         if len(experiment_files) < 2:  # experiment crashed
-            failed_experiments[experiment] = params
+            failed_experiments[experiment] = (params, 'crash')
+        elif len(experiment_files) == 2:
+            failed_experiments[experiment] = (params, 'overflow')
         else:
             with open(f'{root_dir}/{experiment}/metrics.pkl', 'rb') as f:
                 metrics = pickle.load(f)
@@ -40,7 +42,7 @@ def summarize_results(failed, successful):
             np.mean(metrics['epoch_time']),
             'successful'
         )
-    for exp_name, params in failed.items():
+    for exp_name, (params, failure_reason) in failed.items():
         df_rows[exp_name] = (
             params['optim']['K'],
             params['optim']['batch_size'],
@@ -53,7 +55,7 @@ def summarize_results(failed, successful):
             np.nan,
             np.nan,
             np.nan,
-            'failed'
+            failure_reason
         )
 
     df = pd.DataFrame.from_dict(df_rows, orient='index', columns=[
