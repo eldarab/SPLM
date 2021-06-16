@@ -59,9 +59,9 @@ def gen_splm_experiment_set(folder_path, batch_size_interval, K_interval, beta_i
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiments_dir', type=str, required=True, help='Experiments folder path.')
-    parser.add_argument('--batch_size', type=tuple, default=(2, 100, 5), help='tuple (start, stop, num) to create a linspace of batch_size.')
-    parser.add_argument('--K', type=tuple, default=(5, 100, 5), help='tuple (start, stop, num) to create a linspace of K.')
-    parser.add_argument('--beta', type=tuple, default=(1., 5., 5), help='tuple (10^start, 10^stop, num) to create a linspace of beta.')
+    parser.add_argument('--batch_size', type=tuple, default=(10, 100, 10), help='tuple (start, stop, num) to create a linspace of batch_size.')
+    parser.add_argument('--K', type=tuple, default=(10, 100, 1), help='tuple (start, stop, num) to create a linspace of K.')
+    parser.add_argument('--beta', type=tuple, default=(0.5, 5., 10), help='tuple (10^start, 10^stop, num) to create a logspace of beta.')
     args = parser.parse_args()
 
     num_experiments = gen_splm_experiment_set(args.experiments_dir, args.batch_size, args.K, args.beta)
