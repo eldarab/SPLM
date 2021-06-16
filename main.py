@@ -12,7 +12,7 @@ from torchvision.transforms import transforms
 
 from datasets import SyntheticDataset
 from nets.fc import FCNet
-from plotting import plot_metrics
+from plotting import plot_metrics, report_overflow
 from train import trainer
 from utils.loss_functions import MulticlassHingeLoss
 
@@ -26,8 +26,8 @@ def init_data(params: dict):
                                           input_dim=params['model']['input_dim'],
                                           num_classes=params['model']['num_classes'])
 
-        train_loader = DataLoader(synthetic_train, batch_size=params['optim']['batch_size'], shuffle=True)
-        eval_loader = DataLoader(synthetic_eval, batch_size=params['optim']['batch_size'], shuffle=False)
+        train_loader = DataLoader(synthetic_train, batch_size=params['optim']['batch_size'], shuffle=True, drop_last=True)
+        eval_loader = DataLoader(synthetic_eval, batch_size=params['optim']['batch_size'], shuffle=False, drop_last=True)
 
     elif params['data']['dataset'] == 'mnist':
         mnist_train = datasets.MNIST("./datasets", train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
@@ -35,8 +35,8 @@ def init_data(params: dict):
         mnist_train.data = mnist_train.data[:params['data']['train_samples']]
         mnist_test.data = mnist_test.data[:params['data']['eval_samples']]
 
-        train_loader = DataLoader(mnist_train, batch_size=params['optim']['batch_size'], shuffle=True)
-        eval_loader = DataLoader(mnist_test, batch_size=params['optim']['batch_size'], shuffle=False)
+        train_loader = DataLoader(mnist_train, batch_size=params['optim']['batch_size'], shuffle=True, drop_last=True)
+        eval_loader = DataLoader(mnist_test, batch_size=params['optim']['batch_size'], shuffle=False, drop_last=True)
 
     else:
         raise RuntimeError(f'Illegal dataset {params["data"]["dataset"]}')
@@ -88,16 +88,20 @@ def main():
     if torch.cuda.is_available() and params['general']['use_cuda']:
         model.to('cuda')
 
-    metrics = trainer(
-        model=model,
-        train_loader=train_loader,
-        eval_loader=eval_loader,
-        loss_fn=loss_fn,
-        metrics_fns={'accuracy': accuracy_score},
-        params=params,
-    )
-
-    plot_metrics(metrics, time_str, title)
+    try:
+        metrics = trainer(
+            model=model,
+            train_loader=train_loader,
+            eval_loader=eval_loader,
+            loss_fn=loss_fn,
+            metrics_fns={'accuracy': accuracy_score},
+            params=params,
+        )
+        plot_metrics(metrics, time_str, title)
+    except OverflowError:
+        print('Reporting overflow and exiting.')
+        report_overflow(time_str, title)
+        exit(0)
 
 
 if __name__ == '__main__':

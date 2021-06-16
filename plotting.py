@@ -34,3 +34,8 @@ def plot_metrics(metrics, time_str, title, delimiter='_'):
         plt.ylabel(metric)
         plt.savefig(f'./figs/{title}__{time_str}/{metric}_vs_time.png')
         plt.clf()
+
+
+def report_overflow(time_str, title):
+    with open(f'./figs/{title}__{time_str}/overflow.txt', 'w') as f:
+        f.write('Overflow happened.')
