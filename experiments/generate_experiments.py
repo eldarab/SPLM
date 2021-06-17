@@ -64,7 +64,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiments_dir', type=str, default='/home/eldar.a/SPLM2/experiments', help='Experiments folder path.')
     parser.add_argument('--batch_size', type=tuple, default=(10, 100, 10), help='tuple (start, stop, num) to create a linspace of batch_size.')
-    parser.add_argument('--K', type=tuple, default=(20, 100, 1), help='tuple (start, stop, num) to create a linspace of K.')
+    parser.add_argument('--K', type=tuple, default=(50, 100, 1), help='tuple (start, stop, num) to create a linspace of K.')
     parser.add_argument('--beta', type=tuple, default=(0.5, 5., 10), help='tuple (10^start, 10^stop, num) to create a logspace of beta.')
     args = parser.parse_args()
 
