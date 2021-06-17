@@ -69,7 +69,7 @@ def summarize_results(failed, successful):
 def main():
     failed, successful = extract_results('/home/eldar.a/SPLM2/figs')
     df = summarize_results(failed, successful)
-    df.to_csv('/home/eldar.a/SPLM2/results_1.csv')
+    df.to_csv('/home/eldar.a/SPLM2/results_2.csv')
 
 
 if __name__ == '__main__':
