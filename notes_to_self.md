@@ -51,3 +51,6 @@
 3. no map_fn in PT like in TF
 4. in addition, needs to customize loss functions (doesn't scale)
 
+## Weird phenomena
+
+* The noisier (small batch_size) the algorithm, the better the accuracy. 
