@@ -11,7 +11,7 @@ def gen_splm_yml(yml_path, batch_size, K, beta):
     beta = int(round(beta))
     data = dict(
         general=dict(
-            seed=42,
+            seed=43,
             use_cuda=True
         ),
         data=dict(
