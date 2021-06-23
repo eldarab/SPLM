@@ -11,9 +11,6 @@ def plot_metrics(metrics, time_str, title, delimiter='_'):
     metric_types = {delimiter.join(metric_name.split(delimiter)[1:]) for metric_name in metrics
                     if metric_name not in ('epoch_time', 'beta')}
 
-    if len(set(metrics['beta'])) == 1:  # no scheduler
-        metrics.pop('beta')
-
     for metric in metric_types:
         if metric == 'epoch_time':
             continue
