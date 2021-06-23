@@ -1,7 +1,6 @@
 import warnings
 import weakref
 from functools import wraps
-from typing import Optional
 
 import numpy as np
 import torch
@@ -48,7 +47,7 @@ class SPLM(Optimizer):
         if len(self.param_groups) > 1:
             raise NotImplementedError(f'This optimizer still doesnt support more than 1 param group.')
 
-    def step2(self, **inner_minimization_kwargs):
+    def step(self, **inner_minimization_kwargs):
         """
         Performs a single optimization step.
 
@@ -64,9 +63,6 @@ class SPLM(Optimizer):
             reshaped_params = reshape_params(self.param_groups[0], w_t_plus_1)
             for idx, param in enumerate(self.param_groups[0]['params']):
                 param.copy_(reshaped_params[idx])
-
-    def step(self, closure=None) -> Optional[float]:
-        pass
 
     def __fdpg(self, A: Tensor, b: Tensor, w_t: Tensor) -> Tensor:
         """
@@ -284,7 +280,8 @@ def prepare_inner_minimization_multiclass_classification(
         model: nn.Module,
         output: Tensor,
         classes: list,
-        y_true: Tensor) -> (Tensor, Tensor, Tensor):
+        y_true: Tensor
+) -> (Tensor, Tensor, Tensor):
     """
     Initializes the matrix A^t_y and the vector b^t_y in the case of hinge loss multiclass
     classification.
@@ -319,7 +316,7 @@ def prepare_inner_minimization_multiclass_classification(
     return w, torch.cat(A, dim=0), torch.cat(b, dim=0).unsqueeze(1)
 
 
-def test_optimizer():
+def test_scheduler():
     model = [Parameter(torch.randn(2, 2, requires_grad=True))]
     optimizer = SPLM(
         params=model,
@@ -328,10 +325,10 @@ def test_optimizer():
     scheduler = StepBeta(optimizer, step_size=10, gamma=10)
 
     for epoch in range(100):
-        optimizer.step()
+        # optimizer.step()
         scheduler.step()
         print(f'epoch: {epoch} beta: {optimizer.param_groups[0]["beta"]}')
 
 
 if __name__ == '__main__':
-    test_optimizer()
+    test_scheduler()
