@@ -5,11 +5,18 @@ from torch import nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from optimization import prepare_inner_minimization_multiclass_classification, SPLM
+from optimization import prepare_inner_minimization_multiclass_classification, SPLM, StepBeta
 from utils.utils import report_metrics
 
 
-def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader, loss_fn: nn.Module, metrics_fns: dict, params):
+def trainer(
+        model: nn.Module,
+        train_loader: DataLoader,
+        eval_loader: DataLoader,
+        loss_fn: nn.Module,
+        metrics_fns: dict,
+        params
+):
     # TODO return type hinting
 
     # initialization
@@ -18,6 +25,7 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
     metrics_values['train_loss'] = []
     metrics_values['eval_loss'] = []
     metrics_values['epoch_time'] = []
+    metrics_values['beta'] = []
 
     classes = [i for i in range(params['model']['num_classes'])]  # TODO
     # TODO model.init_weights_normal()
@@ -32,9 +40,18 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
             beta=float(params['optim']['beta'])
         )
 
+    if params['optim']['scheduler']['type'] == 'step_beta':
+        scheduler = StepBeta(
+            optimizer=optimizer,
+            step_size=params['optim']['scheduler']['step_size'],
+            gamma=params['optim']['scheduler']['gamma'],
+        )
+    else:
+        scheduler = None
+
     for epoch in range(params['optim']['epochs']):
         t = time.time()
-        for i, (x, y) in tqdm(enumerate(train_loader)):
+        for i, (x, y) in tqdm(enumerate(train_loader), desc=f'epoch {epoch:<3d}'):
             if torch.cuda.is_available() and params['general']['use_cuda']:
                 x = x.cuda()
                 y = y.cuda()
@@ -55,6 +72,7 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
                 optimizer.step()
 
         metrics_values['epoch_time'].append(time.time() - t)
+        metrics_values['beta'].append(optimizer.param_groups[0]['beta'])
 
         # evaluate
         metrics_values = evaluator(model, train_loader, loss_fn, metrics_fns, metrics_values, params)
@@ -62,20 +80,31 @@ def trainer(model: nn.Module, train_loader: DataLoader, eval_loader: DataLoader,
         metrics_values = evaluator(model, eval_loader, loss_fn, metrics_fns, metrics_values, params)
         model.train(True)
 
-        report_metrics(epoch, metrics_values)
+        report_metrics(metrics_values)
+
+        # scheduler step
+        if scheduler:
+            scheduler.step()
 
     return metrics_values
 
 
-def evaluator(model, dataloader, loss_fn, metrics_fns, metrics_values, params):
+def evaluator(
+        model,
+        dataloader,
+        loss_fn,
+        metrics_fns,
+        metrics_values,
+        params
+):
     """
     Evaluate a model without gradient calculation
+    :param params:
+    :type params:
     :param metrics_fns:
     :type metrics_fns:
     :param metrics_values:
     :type metrics_values:
-    :param use_cuda:
-    :type use_cuda:
     :param loss_fn:
     :type loss_fn:
     :param dataloader:
@@ -86,7 +115,6 @@ def evaluator(model, dataloader, loss_fn, metrics_fns, metrics_values, params):
     """
     loss = 0
     mode = 'train_' if model.training else 'eval_'
-    m = len(dataloader.dataset)
     for metric_name, metric_fn in metrics_fns.items():
         metrics_values[mode + metric_name].append(0)
 
