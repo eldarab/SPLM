@@ -3,8 +3,8 @@ general:
   use_cuda: False
 data:
   dataset: mnist
-  train_samples: 1000
-  eval_samples: 100
+  train_samples: 10000
+  eval_samples: 2001
 model:
   input_dim: 784
   hidden_dim: 32
@@ -13,7 +13,11 @@ model:
   num_classes: 10
   loss: hinge
 optim:
-  epochs: 20
-  batch_size: 100
+  epochs: 100
+  batch_size: 1000
   optimizer: adam
   lr: 0.0005
+  scheduler:
+    gamma: null
+    step_size: null
+    type: no

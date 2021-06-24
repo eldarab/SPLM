@@ -1,24 +1,24 @@
-general:
-  seed: 42
-  use_cuda: True
 data:
-  dataset: mnist
-  train_samples: 10000
-  eval_samples: 2001
+    dataset: mnist
+    eval_samples: 2001
+    train_samples: 10000
+general:
+    seed: 42
+    use_cuda: true
 model:
-  input_dim: 784
-  hidden_dim: 32
-  output_dim: 10  # must be equal to num_classes
-  activation: Softplus
-  num_classes: 10
-  loss: hinge
+    activation: Softplus
+    hidden_dim: 32
+    input_dim: 784
+    loss: hinge
+    num_classes: 10
+    output_dim: 10
 optim:
-  epochs: 5
-  batch_size: 1000
-  optimizer: splm
-  scheduler:
-    type: step_beta
-    step_size: 10
-    gamma: 10
-  K: 50
-  beta: 100.0
+    K: 50
+    batch_size: 1000
+    beta: 10.0
+    epochs: 20
+    optimizer: splm
+    scheduler:
+        gamma: 10
+        step_size: 4
+        type: step_beta
