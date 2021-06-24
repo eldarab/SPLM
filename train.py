@@ -25,7 +25,6 @@ def trainer(
     metrics_values['train_loss'] = []
     metrics_values['eval_loss'] = []
     metrics_values['epoch_time'] = []
-    metrics_values['beta'] = []
 
     classes = [i for i in range(params['model']['num_classes'])]  # TODO
     # TODO model.init_weights_normal()
@@ -48,6 +47,9 @@ def trainer(
         )
     else:
         scheduler = None
+
+    if 'beta' in optimizer.param_groups[0]:
+        metrics_values['beta'] = []
 
     for epoch in range(params['optim']['epochs']):
         t = time.time()
@@ -72,7 +74,8 @@ def trainer(
                 optimizer.step()
 
         metrics_values['epoch_time'].append(time.time() - t)
-        metrics_values['beta'].append(optimizer.param_groups[0]['beta'])
+        if 'beta' in optimizer.param_groups[0]:
+            metrics_values['beta'].append(optimizer.param_groups[0]['beta'])
 
         # evaluate
         metrics_values = evaluator(model, train_loader, loss_fn, metrics_fns, metrics_values, params)
