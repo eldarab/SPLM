@@ -75,7 +75,7 @@ def gen_splm_experiment_set(folder_path, batch_size_interval, K_interval, beta_i
     return num_experiments
 
 
-def gen_splm_experiment_set_step_beta(root_path, beta_interval, step_size_interval, gamma_interval, sub_folder='splm_mnist_hinge_pending'):
+def gen_splm_experiment_set_step_beta(root_path, beta_interval, step_size_interval, gamma_interval, sub_folder='splm_mnist_hinge'):
     data = []
 
     num_experiments = 0
@@ -86,14 +86,14 @@ def gen_splm_experiment_set_step_beta(root_path, beta_interval, step_size_interv
                 step_size = int(round(step_size))
                 gamma = int(round(gamma))
                 beta = int(round(beta))
-                yml_path = f'{root_path}/{sub_folder}/scheduler_step_beta__step_{step_size}__gamma_{gamma}.yml'
+                yml_path = f'{root_path}/{sub_folder}/scheduler_step__beta_{beta}__step_{step_size}__gamma_{gamma}.yml'
 
                 gen_splm_yml(yml_path=yml_path, beta=beta, step_size=step_size, gamma=gamma, scheduler='step_beta')
 
-                data.append((step_size, gamma))
+                data.append((beta, step_size, gamma))
                 num_experiments += 1
 
-    pd.DataFrame(data, columns=['step_size', 'gamma']).to_csv(f'{root_path}/{sub_folder}/.summary.csv', index=False)
+    pd.DataFrame(data, columns=['beta', 'step_size', 'gamma']).to_csv(f'{root_path}/{sub_folder}/.summary.csv', index=False)
 
     return num_experiments
 
