@@ -10,3 +10,4 @@
 /experiments/results/splm_mnist_hinge_1.csv
 /experiments/results/splm_mnist_hinge_2.csv
 /.idea/vcs.xml
+*.pyc
