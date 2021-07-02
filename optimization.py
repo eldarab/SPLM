@@ -1,7 +1,6 @@
 import warnings
 import weakref
 from functools import wraps
-from typing import Optional
 
 import numpy as np
 import torch
@@ -26,10 +25,11 @@ EPOCH_DEPRECATION_WARNING = (
 
 class SPLM(Optimizer):
     """
-    Implements SPLM algorithm.
+    Implements the SPLM algorithm.
 
+    :return:
+    :rtype:
     """
-
     def __init__(self, params, prepare_inner_minimization_fn, beta=500., K=50):
         if not K > 0:
             raise ValueError(f'Invalid K (inner minimization steps): {K}')
@@ -48,7 +48,7 @@ class SPLM(Optimizer):
         if len(self.param_groups) > 1:
             raise NotImplementedError(f'This optimizer still doesnt support more than 1 param group.')
 
-    def step2(self, **inner_minimization_kwargs):
+    def step(self, **inner_minimization_kwargs):
         """
         Performs a single optimization step.
 
@@ -64,9 +64,6 @@ class SPLM(Optimizer):
             reshaped_params = reshape_params(self.param_groups[0], w_t_plus_1)
             for idx, param in enumerate(self.param_groups[0]['params']):
                 param.copy_(reshaped_params[idx])
-
-    def step(self, closure=None) -> Optional[float]:
-        pass
 
     def __fdpg(self, A: Tensor, b: Tensor, w_t: Tensor) -> Tensor:
         """
@@ -87,8 +84,9 @@ class SPLM(Optimizer):
         w_t = w_t.view(p, 1)  # TODO necessary?
         A = A.view(n, p)
         b = b.view(n, 1)
+        beta = self.param_groups[0]['beta']  # todo generalize
 
-        L = calc_lip_const(A, self.beta)
+        L = calc_lip_const(A, beta)
 
         # 1. Initialization
         u_k = None
@@ -102,7 +100,7 @@ class SPLM(Optimizer):
             t_k = t_k_next
             y_k_prev = y_k
 
-            u_k = w_t + (1 / self.beta) * A.t().mm(w_k)
+            u_k = w_t + (1 / beta) * A.t().mm(w_k)
             y_k = - simplex_projection((1 / L) * (A.mm(u_k) + b - L * w_k))
             t_k_next = (1 + np.sqrt(1 + 4 * (t_k ** 2))) / 2
             w_k_next = y_k + ((t_k - 1) / t_k_next) * (y_k - y_k_prev)
@@ -284,7 +282,8 @@ def prepare_inner_minimization_multiclass_classification(
         model: nn.Module,
         output: Tensor,
         classes: list,
-        y_true: Tensor) -> (Tensor, Tensor, Tensor):
+        y_true: Tensor
+) -> (Tensor, Tensor, Tensor):
     """
     Initializes the matrix A^t_y and the vector b^t_y in the case of hinge loss multiclass
     classification.
@@ -319,7 +318,7 @@ def prepare_inner_minimization_multiclass_classification(
     return w, torch.cat(A, dim=0), torch.cat(b, dim=0).unsqueeze(1)
 
 
-def test_optimizer():
+def tet_scheduler():
     model = [Parameter(torch.randn(2, 2, requires_grad=True))]
     optimizer = SPLM(
         params=model,
@@ -328,10 +327,9 @@ def test_optimizer():
     scheduler = StepBeta(optimizer, step_size=10, gamma=10)
 
     for epoch in range(100):
-        optimizer.step()
         scheduler.step()
-        print(f'epoch: {epoch} beta: {optimizer.param_groups[0]["beta"]}')
+        print(f'epoch: {epoch} beta: {optimizer.step()}')
 
 
 if __name__ == '__main__':
-    test_optimizer()
+    tet_scheduler()

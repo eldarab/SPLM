@@ -33,6 +33,9 @@ def summarize_results(failed, successful):
             params['optim']['batch_size'],
             params['optim']['beta'],
             params['optim']['epochs'],
+            params['optim']['scheduler']['type'],
+            params['optim']['scheduler']['step_size'],
+            params['optim']['scheduler']['gamma'],
             max(metrics['train_accuracy']),
             max(metrics['eval_accuracy']),
             min(metrics['train_loss']),
@@ -48,6 +51,9 @@ def summarize_results(failed, successful):
             params['optim']['batch_size'],
             params['optim']['beta'],
             params['optim']['epochs'],
+            params['optim']['scheduler']['type'],
+            params['optim']['scheduler']['step_size'],
+            params['optim']['scheduler']['gamma'],
             np.nan,
             np.nan,
             np.nan,
@@ -59,17 +65,17 @@ def summarize_results(failed, successful):
         )
 
     df = pd.DataFrame.from_dict(df_rows, orient='index', columns=[
-        'K', 'batch_size', 'beta', 'epochs', 'best_train_accuracy', 'best_eval_accuracy',
-        'min_train_loss', 'min_eval_loss', 'std_train_loss', 'std_eval_loss', 'mean_epoch_time', 'status'
+        'K', 'batch_size', 'beta', 'epochs', 'scheduler_type', 'step_size', 'gamma', 'best_train_accuracy', 'best_eval_accuracy',
+        'best_train_loss', 'best_eval_loss', 'std_train_loss', 'std_eval_loss', 'mean_epoch_time', 'status'
     ])
 
     return df
 
 
 def main():
-    failed, successful = extract_results('/home/eldar.a/SPLM2/experiments/results/splm_mnist_hinge_2')
+    failed, successful = extract_results('/home/eldar.a/SPLM2/experiments/results/splm_mnist_hinge_scheduler_results')
     df = summarize_results(failed, successful)
-    df.to_csv('/home/eldar.a/SPLM2/results_2.csv')
+    df.to_csv('/home/eldar.a/SPLM2/experiments/results/splm_mnist_hinge_scheduler_results.csv')
 
 
 if __name__ == '__main__':

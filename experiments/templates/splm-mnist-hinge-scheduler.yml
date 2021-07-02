@@ -1,0 +1,24 @@
+data:
+    dataset: mnist
+    eval_samples: 2001
+    train_samples: 10000
+general:
+    seed: 42
+    use_cuda: true
+model:
+    activation: Softplus
+    hidden_dim: 32
+    input_dim: 784
+    loss: hinge
+    num_classes: 10
+    output_dim: 10
+optim:
+    K: 50
+    batch_size: 1000
+    beta: 10.0
+    epochs: 20
+    optimizer: splm
+    scheduler:
+        gamma: 10
+        step_size: 4
+        type: step_beta
