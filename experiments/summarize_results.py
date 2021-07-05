@@ -1,5 +1,8 @@
+import argparse
 import os
 import pickle
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import yaml
@@ -72,11 +75,23 @@ def summarize_results(failed, successful):
     return df
 
 
-def main():
-    failed, successful = extract_results('/home/eldar.a/SPLM2/experiments/results/splm_mnist_hinge_scheduler_results')
+def main(figs_dir, output_dir):
+    figs_dir = Path(figs_dir)
+    output_dir = Path(output_dir)
+
+    failed, successful = extract_results(figs_dir)
+    print(f'Extracted results from: {figs_dir}')
+
     df = summarize_results(failed, successful)
-    df.to_csv('/home/eldar.a/SPLM2/experiments/results/splm_mnist_hinge_scheduler_results.csv')
+
+    csv_path = f'{output_dir}/{figs_dir.name}.csv'
+    df.to_csv(csv_path)
+    print(f'Saved csv: {csv_path}')
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--figs_dir", type=str, required=True, help="path to figs/ directory with plots.")
+    parser.add_argument("--output_dir", type=str, required=True, help="path to output_dir/figs_dir.csv .")
+    args = parser.parse_args()
+    main(args.figs_dir, args.output_dir)
