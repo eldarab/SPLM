@@ -10,64 +10,83 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import transforms
 
-from datasets import SyntheticDataset
-from nets.fc import FCNet
+from datasets.synthetic import SyntheticDataset
 from plotting import plot_metrics, report_overflow
 from train import trainer
+from utils.paths import DATASETS_DIR
+from utils.supported_experiments import *
 from utils.loss_functions import MulticlassHingeLoss
+from models.mnist_classifiers import FeedForwardMNISTClassifier
+from torchvision.models import vgg11_bn, resnet18
 
 
 def init_data(params: dict):
-    if params['data']['dataset'] == 'synthetic':
-        synthetic_train = SyntheticDataset(num_samples=params['data']['train_samples'],
-                                           input_dim=params['model']['input_dim'],
-                                           num_classes=params['model']['num_classes'])
-        synthetic_eval = SyntheticDataset(num_samples=params['data']['eval_samples'],
-                                          input_dim=params['model']['input_dim'],
-                                          num_classes=params['model']['num_classes'])
+    dataset = params['data']['dataset']
+    train_samples = params['data']['train_samples']
+    eval_samples = params['data']['eval_samples']
+    batch_size = params['optim']['batch_size']
 
-        train_loader = DataLoader(synthetic_train, batch_size=params['optim']['batch_size'], shuffle=True, drop_last=True)
-        eval_loader = DataLoader(synthetic_eval, batch_size=params['optim']['batch_size'], shuffle=False, drop_last=True)
-
-    elif params['data']['dataset'] == 'mnist':
-        mnist_train = datasets.MNIST("./datasets", train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
-        mnist_test = datasets.MNIST("./datasets", train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
-        mnist_train.data = mnist_train.data[:params['data']['train_samples']]
-        mnist_test.data = mnist_test.data[:params['data']['eval_samples']]
-
-        train_loader = DataLoader(mnist_train, batch_size=params['optim']['batch_size'], shuffle=True, drop_last=True)
-        eval_loader = DataLoader(mnist_test, batch_size=params['optim']['batch_size'], shuffle=False, drop_last=True)
-
+    if dataset == SYNTHETIC:
+        train_dataset = SyntheticDataset(num_samples=train_samples, num_classes=params['model']['num_classes'])
+        eval_dataset = SyntheticDataset(num_samples=eval_samples, num_classes=params['model']['num_classes'])
+    elif dataset == MNIST:
+        train_dataset = datasets.MNIST(DATASETS_DIR, train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
+        eval_dataset = datasets.MNIST(DATASETS_DIR, train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
+        train_dataset.data = train_dataset.data[:train_samples]
+        eval_dataset.data = eval_dataset.data[:eval_samples]
+    elif dataset == CIFAR10:
+        train_dataset = datasets.CIFAR10(DATASETS_DIR, train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
+        eval_dataset = datasets.CIFAR10(DATASETS_DIR, train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
+        train_dataset.data = train_dataset.data[:train_samples]
+        eval_dataset.data = eval_dataset.data[:eval_samples]
+        raise NotImplementedError('First we need to normalize data!')
     else:
         raise RuntimeError(f'Illegal dataset {params["data"]["dataset"]}')
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+    eval_loader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
 
     return train_loader, eval_loader
 
 
 def init_loss(params: dict):
-    if params['model']['loss'] == 'hinge':
-        margin = params['model']['margin'] if 'margin' in params['model'] else 1.
-        loss_fn = MulticlassHingeLoss(margin)
-    elif params['model']['loss'] == 'CE':
-        loss_fn = nn.CrossEntropyLoss()
-    elif params['model']['loss'] == 'MultiMarginLoss':
-        margin = params['model']['margin'] if 'margin' in params['model'] else 1.
-        loss_fn = nn.MultiMarginLoss(margin=margin)
+    loss = params['model']['loss']
+    margin = params['model'].pop('margin', 1.)
+
+    if loss == HINGE_LOSS:
+        return MulticlassHingeLoss(margin=margin)
+    elif loss == CE_LOSS:
+        return nn.CrossEntropyLoss()
+    elif loss == MULTI_MARGIN_LOSS:
+        return nn.MultiMarginLoss(margin=margin)
     else:
-        raise RuntimeError(f'Illegal loss {params["model"]["loss"]}')
-    return loss_fn
+        raise RuntimeError(f'Loss function "{loss}" is not supported. Supported losses are: {SUPPORTED_LOSSES}.')
 
 
 def init_experiment_folder(params: dict):
     time_str = time.strftime('%Y_%m_%d__%H_%M_%S')
-    title = f"{params['optim']['optimizer']}_optimizer__{params['model']['loss']}_loss"
-    os.makedirs(f'./figs/{title}__{time_str}')
-    with open(f'./figs/{title}__{time_str}/params.yml', 'w') as f2:
-        yaml.safe_dump(params, f2)
-    return time_str, title
+    experiment_name = f"{params['model']['model_name']}_{params['optim']['optimizer']}_{params['data']['dataset']}"
+    os.makedirs(f'./figs/{experiment_name}__{time_str}')
+    with open(f'./figs/{experiment_name}__{time_str}/params.yml', 'w') as f:
+        yaml.safe_dump(params, f)
+    return time_str, experiment_name
+
+
+def init_model(params: dict):
+    model_name = params['model']['model_name']
+
+    if model_name == FF_MNIST_CLASSIFIER:
+        return FeedForwardMNISTClassifier(activation=params['model']['activation'], num_classes=params['model']['num_classes'])
+    elif model_name == VGG11_BN:
+        return vgg11_bn(pretrained=params['model']['pretrained'], num_classes=params['model']['num_classes'])
+    elif model_name == RESNET18:
+        return resnet18(pretrained=params['model']['pretrained'], num_classes=params['model']['num_classes'])
+    else:
+        raise RuntimeError(f'Model "{model_name}" is not supported. Supported models are: {SUPPORTED_MODELS}.')
 
 
 def main():
+    # load experiment configuration
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", type=str, required=True, help="path to .yml file for experiments.")
     args = parser.parse_args()
@@ -77,17 +96,16 @@ def main():
 
     torch.manual_seed(params['general']['seed'])
 
-    time_str, title = init_experiment_folder(params)
-
+    # init experiment
+    time_str, experiment_name = init_experiment_folder(params)
     loss_fn = init_loss(params)
-    train_loader, eval_loader = init_data(params)  # TODO normalize data
-
-    model = FCNet(dims=[params['model']['input_dim'], params['model']['hidden_dim'], params['model']['output_dim']],
-                  activation=params['model']['activation'])
+    train_loader, eval_loader = init_data(params)
+    model = init_model(params)
 
     if torch.cuda.is_available() and params['general']['use_cuda']:
         model.to('cuda')
 
+    # run experiment
     try:
         metrics = trainer(
             model=model,
@@ -97,10 +115,10 @@ def main():
             metrics_fns={'accuracy': accuracy_score},
             params=params,
         )
-        plot_metrics(metrics, time_str, title)
+        plot_metrics(metrics, time_str, experiment_name)
     except OverflowError:
         print('Reporting overflow and exiting.')
-        report_overflow(time_str, title)
+        report_overflow(time_str, experiment_name)
         exit(0)
 
 
