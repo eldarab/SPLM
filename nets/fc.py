@@ -14,6 +14,7 @@ class FCNet(nn.Module, metaclass=ABCMeta):
     FCNet([4096, 1000, 200], 'ReLU', 0.2) - for a fully connected with three layers, ReLU, weight normalization and
     dropout of 0.2.
     """
+
     def __init__(self, dims, activation: str = 'ReLU', dropout: float = 0.0) -> None:
         super(FCNet, self).__init__()
         layers = []
