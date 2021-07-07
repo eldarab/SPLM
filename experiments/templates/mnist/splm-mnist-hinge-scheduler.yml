@@ -6,12 +6,10 @@ general:
     seed: 42
     use_cuda: true
 model:
+    model_name: FeedForwardMNISTClassifier
     activation: Softplus
-    hidden_dim: 32
-    input_dim: 784
     loss: hinge
     num_classes: 10
-    output_dim: 10
 optim:
     K: 50
     batch_size: 1000
@@ -19,6 +17,7 @@ optim:
     epochs: 20
     optimizer: splm
     scheduler:
+        use_scheduler: true
         gamma: 10
         step_size: 4
         type: step_beta
