@@ -318,7 +318,7 @@ def prepare_inner_minimization_multiclass_classification(
     return w, torch.cat(A, dim=0), torch.cat(b, dim=0).unsqueeze(1)
 
 
-def tet_scheduler():
+def test_scheduler():
     model = [Parameter(torch.randn(2, 2, requires_grad=True))]
     optimizer = SPLM(
         params=model,
@@ -332,4 +332,4 @@ def tet_scheduler():
 
 
 if __name__ == '__main__':
-    tet_scheduler()
+    test_scheduler()

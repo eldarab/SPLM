@@ -5,7 +5,7 @@ from torch import nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from optimization import prepare_inner_minimization_multiclass_classification, SPLM, StepBeta
+from optim import prepare_inner_minimization_multiclass_classification, SPLM, StepBeta
 from utils.utils import report_metrics
 
 
