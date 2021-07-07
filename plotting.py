@@ -44,7 +44,7 @@ def plot_metrics(metrics, time_str, title, delimiter='_'):
         ax.legend()
 
         ax2 = ax.twinx()
-        ax2.semilogy(metrics['beta'], color="black")
+        ax2.semilogy(times, metrics['beta'], color="black")
         ax2.set_ylabel('beta')
 
         plt.title(f'{title}\n{metric} vs. time')
