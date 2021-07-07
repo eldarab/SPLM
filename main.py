@@ -11,7 +11,7 @@ from torchvision import datasets
 from torchvision.transforms import transforms
 
 from datasets.synthetic import SyntheticDataset
-from plotting import plot_metrics, report_overflow
+from utils.plotting import plot_metrics, report_overflow
 from train import trainer
 from utils.paths import DATASETS_DIR
 from utils.supported_experiments import *
