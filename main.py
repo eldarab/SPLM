@@ -5,14 +5,15 @@ import time
 import torch
 import torch.nn as nn
 import yaml
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import transforms
 
 from datasets.synthetic import SyntheticDataset
-from optim import prepare_inner_minimization_multiclass_classification, StepBeta
-from optim import SPLM as SPLMOptimizer
+from optim.splm import prepare_inner_minimization_multiclass_classification
+from optim.beta_scheduler import StepBeta
+from optim.splm import SPLM as SPLMOptimizer
 from utils.plotting import plot_metrics, report_overflow
 from train import trainer
 from utils.paths import DATASETS_DIR
@@ -146,7 +147,7 @@ def main():
             loss_fn=loss_fn,
             optimizer=optimizer,
             scheduler=scheduler,
-            metrics_fns={'accuracy': accuracy_score, 'f1': f1_score},
+            metrics_fns={'accuracy': accuracy_score},
             params=params,
         )
         plot_metrics(metrics, time_str, experiment_name)

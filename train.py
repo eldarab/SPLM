@@ -7,7 +7,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from optim import SPLM
+from optim.splm import SPLM
 from utils.supported_experiments import ADAM
 from utils.supported_experiments import SPLM as SPLM_NAME
 from utils.utils import report_metrics
@@ -23,6 +23,20 @@ def trainer(
         metrics_fns: dict,
         params
 ) -> dict:
+    """
+    Runs a training session for the given model and returns a metrics dict.
+
+    :param model: Any PyTorch model.
+    :param train_loader: Train set DataLoader
+    :param eval_loader: Evaluation set DataLoader
+    :param loss_fn: Scalar loss function.
+    :param optimizer: Optimizer to use.
+    :param scheduler: Scheduler to use, None is allowed.
+    :param metrics_fns: Dictionary of the form {'metric_name': metric_fn} to compute in the evaluation phase.
+    :param params: A dictionary of dictionary, parsed from the .yml file by hydra.
+    :return:
+    """
+
     # initialization
     metrics_values = {'train_' + metric_name: [] for metric_name in metrics_fns.keys()}
     metrics_values.update({'eval_' + metric_name: [] for metric_name in metrics_fns.keys()})
@@ -85,34 +99,34 @@ def evaluator(
         params
 ):
     """
-    Evaluate a model without gradient calculation
-    :param params:
-    :type params:
-    :param metrics_fns:
-    :type metrics_fns:
-    :param metrics_values:
-    :type metrics_values:
-    :param loss_fn:
-    :type loss_fn:
+    Evaluate a model without gradient calculation.
+
+    :param model:
     :param dataloader:
-    :type dataloader:
-    :param model: instance of a model
-    :param dataloader: dataloader to evaluate the model on
-    :return: tuple of (accuracy, loss) values
+    :param loss_fn:
+    :param metrics_fns:
+    :param metrics_values: Dictionary of the form {'metric_name': metric_fn} to compute in the evaluation phase.
+    :param params: A dictionary of dictionary, parsed from the .yml file by hydra.
+    :return:
     """
+
+    # initialize metrics dict
     loss = 0
     mode = 'train_' if model.training else 'eval_'
     for metric_name, metric_fn in metrics_fns.items():
         metrics_values[mode + metric_name].append(0)
 
+    # forward pass
     for i, (x, y) in enumerate(dataloader):
         if torch.cuda.is_available() and params['general']['use_cuda']:
             x = x.cuda()
             y = y.cuda()
 
-        output = model(x.view(params['optim']['batch_size'], params['model']['input_dim']))
+        output = model(x)
 
         loss = loss_fn(output, y)
+
+        # compute metric values
         for metric_name, metric_fn in metrics_fns.items():
             metrics_values[mode + metric_name][-1] += metric_fn(output.cpu().argmax(-1), y.cpu()) / len(dataloader)
 
