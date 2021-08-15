@@ -1,6 +1,7 @@
 import argparse
 import os
 import time
+from pathlib import Path, PosixPath
 
 import torch
 import torch.nn as nn
@@ -14,9 +15,9 @@ from datasets.synthetic import SyntheticDataset
 from optim.splm import prepare_inner_minimization_multiclass_classification
 from optim.beta_scheduler import StepBeta
 from optim.splm import SPLM as SPLMOptimizer
-from utils.logging import plot_metrics, report_overflow
+from utils.logging import plot_metrics, plot_overflow, get_time_str
 from train import trainer
-from utils.paths import DATASETS_DIR
+from utils.paths import DATASETS_DIR, EXPERIMENTS_RESULTS_DIR
 from utils.supported_experiments import *
 from utils.functional import MulticlassHingeLoss
 from models.mnist_classifiers import FeedForwardMNISTClassifier
@@ -33,18 +34,19 @@ def init_data(params: dict):
         train_dataset = SyntheticDataset(num_samples=train_samples, num_classes=params['model']['num_classes'])
         eval_dataset = SyntheticDataset(num_samples=eval_samples, num_classes=params['model']['num_classes'])
     elif dataset == MNIST:
-        train_dataset = datasets.MNIST(DATASETS_DIR, train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
-        eval_dataset = datasets.MNIST(DATASETS_DIR, train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
+        transform = transforms.Compose([transforms.ToTensor()])
+        train_dataset = datasets.MNIST(DATASETS_DIR, train=True, download=True, transform=transform)
+        eval_dataset = datasets.MNIST(DATASETS_DIR, train=False, download=True, transform=transform)
         train_dataset.data = train_dataset.data[:train_samples]
         eval_dataset.data = eval_dataset.data[:eval_samples]
     elif dataset == CIFAR10:
-        train_dataset = datasets.CIFAR10(DATASETS_DIR, train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
-        eval_dataset = datasets.CIFAR10(DATASETS_DIR, train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
+        transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        train_dataset = datasets.CIFAR10(DATASETS_DIR, train=True, download=True, transform=transform)
+        eval_dataset = datasets.CIFAR10(DATASETS_DIR, train=False, download=True, transform=transform)
         train_dataset.data = train_dataset.data[:train_samples]
         eval_dataset.data = eval_dataset.data[:eval_samples]
-        # raise NotImplementedError('First we need to normalize data!')
     else:
-        raise RuntimeError(f'Illegal dataset {params["data"]["dataset"]}')
+        raise RuntimeError(f'Dataset "{dataset}" is not supported. Supported datasets are: {SUPPORTED_DATASETS}.')
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
     eval_loader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
@@ -96,13 +98,20 @@ def init_optim(params: dict, model):
     return optimizer, scheduler
 
 
-def init_experiment_folder(params: dict):
-    time_str = time.strftime('%Y_%m_%d__%H_%M_%S')
-    experiment_name = f"{params['model']['model_name']}_{params['optim']['optimizer']}_{params['data']['dataset']}"
-    os.makedirs(f'./figs/{experiment_name}__{time_str}', exist_ok=True)
-    with open(f'./figs/{experiment_name}__{time_str}/params.yml', 'w') as f:
+def init_results_dir(params: dict, config_path):
+    """
+    Initializes a results folder. Creates an
+    :param params:
+    :param config_path: PosixPath
+    :return:
+    """
+    experiment_name = f"{params['model']['model_name']}_{params['optim']['optimizer']}_{params['data']['dataset']}__{get_time_str()}"
+    results_dir = EXPERIMENTS_RESULTS_DIR / config_path.parent.name / experiment_name
+    os.makedirs(str(results_dir))
+    with open(f'{results_dir}/config.yml', 'w') as f:
         yaml.safe_dump(params, f)
-    return time_str, experiment_name
+    print(f'Successfully initialized results dir {results_dir}')
+    return results_dir
 
 
 def init_model(params: dict):
@@ -121,16 +130,17 @@ def init_model(params: dict):
 def main():
     # load experiment configuration
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file", type=str, required=True, help="path to .yml file for experiments.")
+    parser.add_argument("--file", type=str, required=True, help="path to config .yml file.")
     args = parser.parse_args()
-
-    with open(args.file) as f:
+    args.file = Path(args.file)
+    with open(str(args.file)) as f:
         params = yaml.safe_load(f)
 
+    # set seed
     torch.manual_seed(params['general']['seed'])
 
     # init experiment
-    time_str, experiment_name = init_experiment_folder(params)
+    results_dir = init_results_dir(params, args.file)
     loss_fn = init_loss(params)
     train_loader, eval_loader = init_data(params)
     model = init_model(params)
@@ -150,10 +160,10 @@ def main():
             metrics_fns={'accuracy': accuracy_score},
             params=params,
         )
-        plot_metrics(metrics, time_str, experiment_name)
+        plot_metrics(metrics, results_dir)
     except OverflowError:
         print('Reporting overflow and exiting.')
-        report_overflow(time_str, experiment_name)
+        plot_overflow(results_dir)
         exit(0)
 
 

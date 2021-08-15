@@ -1,12 +1,14 @@
 import pickle
+import time
+from pathlib import PosixPath
 
 import matplotlib.pyplot as plt
 
 OVERFLOW_VALUE = 10e5
 
 
-def plot_metrics(metrics, time_str, title, delimiter='_'):
-    with open(f'./figs/{title}__{time_str}/metrics.pkl', 'wb') as f:
+def plot_metrics(metrics, results_dir: PosixPath, delimiter='_'):
+    with open(f'{results_dir}/metrics.pkl', 'wb') as f:
         pickle.dump(metrics, f)
 
     metric_types = {delimiter.join(metric_name.split(delimiter)[1:]) for metric_name in metrics
@@ -29,8 +31,8 @@ def plot_metrics(metrics, time_str, title, delimiter='_'):
         ax2.semilogy(metrics['beta'], color="black")
         ax2.set_ylabel('beta')
 
-        plt.title(f'{title}\n{metric} vs. epochs')
-        plt.savefig(f'./figs/{title}__{time_str}/{metric}_vs_epochs.png')
+        plt.title(f'{results_dir.name}\n{metric} vs. epochs')
+        plt.savefig(f'{results_dir.name}/{metric}_vs_epochs.png')
         plt.clf()
 
         # vs. time
@@ -48,13 +50,13 @@ def plot_metrics(metrics, time_str, title, delimiter='_'):
         ax2.semilogy(times, metrics['beta'], color="black")
         ax2.set_ylabel('beta')
 
-        plt.title(f'{title}\n{metric} vs. time')
-        plt.savefig(f'./figs/{title}__{time_str}/{metric}_vs_time.png')
+        plt.title(f'{results_dir.name}\n{metric} vs. time')
+        plt.savefig(f'{results_dir.name}/{metric}_vs_time.png')
         plt.clf()
 
 
-def report_overflow(time_str, title):
-    with open(f'./figs/{title}__{time_str}/overflow.txt', 'w') as f:
+def plot_overflow(results_dir: PosixPath):
+    with open(f'{results_dir.name}/overflow.txt', 'w') as f:
         f.write('Overflow happened.')
 
 
@@ -68,3 +70,7 @@ def report_metrics(metrics_values):
         if metric_value[-1] > OVERFLOW_VALUE:
             raise OverflowError()
     print()
+
+
+def get_time_str():
+    return time.strftime('%Y_%m_%d__%H_%M_%S')
