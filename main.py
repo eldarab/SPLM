@@ -14,11 +14,11 @@ from datasets.synthetic import SyntheticDataset
 from optim.splm import prepare_inner_minimization_multiclass_classification
 from optim.beta_scheduler import StepBeta
 from optim.splm import SPLM as SPLMOptimizer
-from utils.plotting import plot_metrics, report_overflow
+from utils.logging import plot_metrics, report_overflow
 from train import trainer
 from utils.paths import DATASETS_DIR
 from utils.supported_experiments import *
-from utils.loss_functions import MulticlassHingeLoss
+from utils.functional import MulticlassHingeLoss
 from models.mnist_classifiers import FeedForwardMNISTClassifier
 from torchvision.models import vgg11_bn, resnet18
 
@@ -99,7 +99,7 @@ def init_optim(params: dict, model):
 def init_experiment_folder(params: dict):
     time_str = time.strftime('%Y_%m_%d__%H_%M_%S')
     experiment_name = f"{params['model']['model_name']}_{params['optim']['optimizer']}_{params['data']['dataset']}"
-    os.makedirs(f'./figs/{experiment_name}__{time_str}')
+    os.makedirs(f'./figs/{experiment_name}__{time_str}', exist_ok=True)
     with open(f'./figs/{experiment_name}__{time_str}/params.yml', 'w') as f:
         yaml.safe_dump(params, f)
     return time_str, experiment_name

@@ -2,10 +2,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch import Tensor
-from torch.nn import Parameter
 from torch.optim import Optimizer
 
-from beta_scheduler import StepBeta
 from utils.functional import simplex_projection, calc_lip_const, flatten_params, reshape_params, g_i_y_hat
 
 
@@ -16,6 +14,7 @@ class SPLM(Optimizer):
     :return:
     :rtype:
     """
+
     def __init__(self, params, prepare_inner_minimization_fn, beta=500., K=50):
         if not K > 0:
             raise ValueError(f'Invalid K (inner minimization steps): {K}')

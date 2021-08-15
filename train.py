@@ -10,7 +10,7 @@ from tqdm import tqdm
 from optim.splm import SPLM
 from utils.supported_experiments import ADAM
 from utils.supported_experiments import SPLM as SPLM_NAME
-from utils.utils import report_metrics
+from utils.logging import report_metrics
 
 
 def trainer(

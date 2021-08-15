@@ -1,5 +1,5 @@
 import torch
-from torch import Tensor
+from torch import Tensor, nn as nn
 
 
 def multiclass_hinge_loss(outputs: Tensor, targets: Tensor, margin=1., reduction='mean', device='cpu') -> Tensor:
@@ -71,16 +71,6 @@ def flatten_params(params, flatten_grad=False):
         return torch.cat([param.flatten() for param in params])
 
 
-def reshape_params_deprecated(params, params_flattened):
-    reshaped_params = []
-    total_elements = 0
-    for param in params:
-        reshaped_params.append(params_flattened[total_elements:total_elements + param.nelement()])
-        reshaped_params[-1] = reshaped_params[-1].view_as(param)
-        total_elements += param.nelement()
-    return reshaped_params
-
-
 def reshape_params(param_groups: dict, params_flattened):
     reshaped_params = []
     total_elements = 0
@@ -108,3 +98,16 @@ def g_i_y_hat(output: Tensor, y_true: Tensor, y_hat: int):  # batch compatible v
     for idx, y in enumerate(y_true):
         loss += zero_one_loss[idx] + output[idx][y_hat] - output[idx][y]
     return loss / len(output)
+
+
+class MulticlassHingeLoss(nn.Module):
+    def __init__(self, margin=1., reduction='mean'):
+        super(MulticlassHingeLoss, self).__init__()
+        self.margin = margin
+        if reduction == 'mean' or reduction == 'sum':
+            self.reduction = reduction
+        else:
+            raise RuntimeError(f'Unsupported reduction: "{reduction}"')
+
+    def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
+        return multiclass_hinge_loss(inputs, targets, self.margin, self.reduction)
