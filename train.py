@@ -51,7 +51,7 @@ def trainer(
 
     for epoch in range(params['optim']['epochs']):
         t = time.time()
-        for i, (x, y) in tqdm(enumerate(train_loader), desc=f'epoch {epoch:<3d}'):
+        for i, (x, y) in tqdm(enumerate(train_loader), desc=f'epoch {epoch:<3d}', total=len(train_loader)):
             if torch.cuda.is_available() and params['general']['use_cuda']:
                 x = x.cuda()
                 y = y.cuda()
@@ -76,6 +76,7 @@ def trainer(
             metrics_values['beta'].append(optimizer.param_groups[0]['beta'])
 
         # evaluate
+        # TODO To speed up training, compute metrics_values on-the-fly for the train set.
         metrics_values = evaluator(model, train_loader, loss_fn, metrics_fns, metrics_values, params)
         model.train(False)
         metrics_values = evaluator(model, eval_loader, loss_fn, metrics_fns, metrics_values, params)
@@ -117,7 +118,7 @@ def evaluator(
         metrics_values[mode + metric_name].append(0)
 
     # forward pass
-    for i, (x, y) in enumerate(dataloader):
+    for i, (x, y) in tqdm(enumerate(dataloader), desc=f'evaluating', total=len(dataloader)):
         if torch.cuda.is_available() and params['general']['use_cuda']:
             x = x.cuda()
             y = y.cuda()
