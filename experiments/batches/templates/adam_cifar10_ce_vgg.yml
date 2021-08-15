@@ -1,0 +1,18 @@
+data:
+    dataset: cifar10
+    eval_samples: 1001
+    train_samples: 50001
+general:
+    seed: 42
+    use_cuda: true
+model:
+    model_name: vgg11_bn
+    pretrained: true
+    loss: CE
+optim:
+    batch_size: 1000
+    epochs: 5
+    optimizer: adam
+    lr: 0.05
+    scheduler:
+        use_scheduler: false
