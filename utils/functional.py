@@ -43,7 +43,7 @@ def simplex_projection(v: Tensor) -> Tensor:
 
 def calc_lip_const(A: Tensor, beta: float):
     # inner minimization utility function
-    # TODO very strange how this works
+    # TODO This is a non-elegant bypass
     try:
         _, s, _ = A.svd()
         L = ((max(s).item()) ** 2) / beta

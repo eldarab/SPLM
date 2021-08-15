@@ -5,12 +5,14 @@ import time
 import torch
 import torch.nn as nn
 import yaml
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import transforms
 
 from datasets.synthetic import SyntheticDataset
+from optim import prepare_inner_minimization_multiclass_classification, StepBeta
+from optim import SPLM as SPLMOptimizer
 from utils.plotting import plot_metrics, report_overflow
 from train import trainer
 from utils.paths import DATASETS_DIR
@@ -39,7 +41,7 @@ def init_data(params: dict):
         eval_dataset = datasets.CIFAR10(DATASETS_DIR, train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
         train_dataset.data = train_dataset.data[:train_samples]
         eval_dataset.data = eval_dataset.data[:eval_samples]
-        raise NotImplementedError('First we need to normalize data!')
+        # raise NotImplementedError('First we need to normalize data!')
     else:
         raise RuntimeError(f'Illegal dataset {params["data"]["dataset"]}')
 
@@ -61,6 +63,36 @@ def init_loss(params: dict):
         return nn.MultiMarginLoss(margin=margin)
     else:
         raise RuntimeError(f'Loss function "{loss}" is not supported. Supported losses are: {SUPPORTED_LOSSES}.')
+
+
+def init_optim(params: dict, model):
+    optimizer = params['optim']['optimizer']
+    scheduler_name = params['optim']['scheduler']['scheduler_name'] if params['optim']['scheduler']['use_scheduler'] else None
+
+    if optimizer == ADAM:
+        optimizer = torch.optim.Adam(model.parameters(), lr=params['optim']['lr'])
+    elif optimizer == SPLM:
+        optimizer = SPLMOptimizer(
+            params=model.parameters(),
+            prepare_inner_minimization_fn=prepare_inner_minimization_multiclass_classification,
+            K=int(params['optim']['K']),
+            beta=float(params['optim']['beta'])
+        )
+    else:
+        raise RuntimeError(f'Optimizer "{optimizer}" is not supported. Supported optimizers are: {SUPPORTED_OPTIMIZERS}.')
+
+    if scheduler_name is None:
+        scheduler = None
+    elif scheduler_name == STEP_BETA:
+        scheduler = StepBeta(
+            optimizer=optimizer,
+            step_size=params['optim']['scheduler']['step_size'],
+            gamma=params['optim']['scheduler']['gamma'],
+        )
+    else:
+        raise RuntimeError(f'Scheduler "{scheduler_name}" is not supported. Supported schedulers are {SUPPORTED_SCHEDULERS}.')
+
+    return optimizer, scheduler
 
 
 def init_experiment_folder(params: dict):
@@ -101,9 +133,9 @@ def main():
     loss_fn = init_loss(params)
     train_loader, eval_loader = init_data(params)
     model = init_model(params)
-
     if torch.cuda.is_available() and params['general']['use_cuda']:
         model.to('cuda')
+    optimizer, scheduler = init_optim(params, model)
 
     # run experiment
     try:
@@ -112,7 +144,9 @@ def main():
             train_loader=train_loader,
             eval_loader=eval_loader,
             loss_fn=loss_fn,
-            metrics_fns={'accuracy': accuracy_score},
+            optimizer=optimizer,
+            scheduler=scheduler,
+            metrics_fns={'accuracy': accuracy_score, 'f1': f1_score},
             params=params,
         )
         plot_metrics(metrics, time_str, experiment_name)

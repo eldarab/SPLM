@@ -1,11 +1,15 @@
 import time
+from typing import Union
 
 import torch
 from torch import nn as nn
+from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from optim import prepare_inner_minimization_multiclass_classification, SPLM, StepBeta
+from optim import SPLM
+from utils.supported_experiments import ADAM
+from utils.supported_experiments import SPLM as SPLM_NAME
 from utils.utils import report_metrics
 
 
@@ -14,11 +18,11 @@ def trainer(
         train_loader: DataLoader,
         eval_loader: DataLoader,
         loss_fn: nn.Module,
+        optimizer: Union[SPLM, Adam],
+        scheduler,  # _BetaScheduler / _LRScheduler
         metrics_fns: dict,
         params
-):
-    # TODO return type hinting
-
+) -> dict:
     # initialization
     metrics_values = {'train_' + metric_name: [] for metric_name in metrics_fns.keys()}
     metrics_values.update({'eval_' + metric_name: [] for metric_name in metrics_fns.keys()})
@@ -26,27 +30,7 @@ def trainer(
     metrics_values['eval_loss'] = []
     metrics_values['epoch_time'] = []
 
-    classes = [i for i in range(params['model']['num_classes'])]  # TODO
-    # TODO model.init_weights_normal()
-
-    if params['optim']['optimizer'] == 'adam':
-        optimizer = torch.optim.Adam(model.parameters(), lr=params['optim']['lr'])
-    else:
-        optimizer = SPLM(
-            params=model.parameters(),
-            prepare_inner_minimization_fn=prepare_inner_minimization_multiclass_classification,
-            K=int(params['optim']['K']),
-            beta=float(params['optim']['beta'])
-        )
-
-    if params['optim']['scheduler']['type'] == 'step_beta':
-        scheduler = StepBeta(
-            optimizer=optimizer,
-            step_size=params['optim']['scheduler']['step_size'],
-            gamma=params['optim']['scheduler']['gamma'],
-        )
-    else:
-        scheduler = None
+    classes = getattr(train_loader.dataset, 'classes')
 
     if 'beta' in optimizer.param_groups[0]:
         metrics_values['beta'] = []
@@ -59,17 +43,17 @@ def trainer(
                 y = y.cuda()
 
             # forward pass
-            output = model(x.view(params['optim']['batch_size'], params['model']['input_dim']))
+            output = model(x)
 
             # compute loss
             loss = loss_fn(output, y) / len(train_loader)
 
             # optimization step
             optimizer.zero_grad()
-            if params['optim']['optimizer'] == 'splm':
+            if params['optim']['optimizer'] == SPLM_NAME:
                 # loss.backward() --- NO NEED TO DO THAT WITH SPLM!!!
                 optimizer.step(model=model, output=output, classes=classes, y_true=y)
-            elif params['optim']['optimizer'] == 'adam':
+            elif params['optim']['optimizer'] == ADAM:
                 loss.backward()
                 optimizer.step()
 

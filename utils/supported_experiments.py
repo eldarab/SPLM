@@ -30,3 +30,19 @@ SUPPORTED_DATASETS = {
     CIFAR10,
     SYNTHETIC
 }
+
+# optimizers
+SPLM = 'splm'
+ADAM = 'adam'
+
+SUPPORTED_OPTIMIZERS = {
+    ADAM,
+    SPLM
+}
+
+# schedulers
+STEP_BETA = 'step_beta'
+
+SUPPORTED_SCHEDULERS = {
+    STEP_BETA
+}

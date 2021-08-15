@@ -44,9 +44,8 @@ class SPLM(Optimizer):
 
         super(SPLM, self).__init__(params, defaults)
 
-        # TODO Support more than 1 param group
         if len(self.param_groups) > 1:
-            raise NotImplementedError(f'This optimizer still doesnt support more than 1 param group.')
+            raise NotImplementedError(f'This optimizer still does not support more than 1 param group.')
 
     def step(self, **inner_minimization_kwargs):
         """
@@ -84,7 +83,7 @@ class SPLM(Optimizer):
         w_t = w_t.view(p, 1)  # TODO necessary?
         A = A.view(n, p)
         b = b.view(n, 1)
-        beta = self.param_groups[0]['beta']  # todo generalize
+        beta = self.param_groups[0]['beta']
 
         L = calc_lip_const(A, beta)
 
@@ -108,7 +107,7 @@ class SPLM(Optimizer):
         return u_k
 
 
-class _BetaScheduler(object):
+class BetaScheduler(object):
 
     def __init__(self, optimizer, last_epoch=-1, verbose=False):
 
@@ -257,7 +256,7 @@ class _BetaScheduler(object):
         self._last_beta = [group['beta'] for group in self.optimizer.param_groups]
 
 
-class StepBeta(_BetaScheduler):
+class StepBeta(BetaScheduler):
     def __init__(self, optimizer, step_size, gamma=0.1, last_epoch=-1, verbose=False):
         self.step_size = step_size
         self.gamma = gamma
@@ -307,7 +306,7 @@ def prepare_inner_minimization_multiclass_classification(
     for class_idx in range(len(classes)):
         # compute gradients w.r.t. each output coordinate, section 4.1 in the paper
         b_y_hat = g_i_y_hat(output, y_true, class_idx)
-        b_y_hat.backward(create_graph=True)  # TODO create graph?
+        b_y_hat.backward(create_graph=True)
         a_y_hat = flatten_params(model.parameters(), flatten_grad=True)  # model gradients at iteration t
 
         # python technicalities
