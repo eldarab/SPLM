@@ -76,7 +76,6 @@ def trainer(
             metrics_values['beta'].append(optimizer.param_groups[0]['beta'])
 
         # evaluate
-        # TODO To speed up training, compute metrics_values on-the-fly for the train set.
         metrics_values = evaluator(model, train_loader, loss_fn, metrics_fns, metrics_values, params)
         model.train(False)
         metrics_values = evaluator(model, eval_loader, loss_fn, metrics_fns, metrics_values, params)
