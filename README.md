@@ -51,11 +51,11 @@ conda activate splm
 cd ~/SPLM
 ```
 ```
-experiments/batches/<BATCH_NAME> | run_batch.sh
+sh run_batch.sh experiments/batches/<BATCH_DIR>
 ```
 
 Reviewing results is under
 ```
-experiments/results/<BATCH_NAME>/<CONFIG_NAME>
+experiments/results/<BATCH_DIR>/<CONFIG_NAME>
 
 ```
