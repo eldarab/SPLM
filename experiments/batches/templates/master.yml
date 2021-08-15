@@ -1,0 +1,27 @@
+# check utils.supported_experiments for further information
+
+data:
+    dataset: mnist  # mnist / cifar10 / synthetic
+    eval_samples: 10000
+    train_samples: 50000
+general:
+    seed: 42
+    use_cuda: true
+model:
+    model_name: mlp  # mlp / vgg11_bn / resnet18
+    pretrained: false  # for vgg11_bn, resnet18
+    activation: Softplus  # for mlp only. Due to mathematical reasons, only smooth and convex activations are supported.
+    loss: hinge  # hinge / MultiMarginLoss / CE
+    num_classes: 10
+optim:
+    batch_size: 1000
+    epochs: 10
+    optimizer: splm  # splm / adam
+    K: 50  # only for splm
+    beta: 10  # only for splm
+    lr: 0.005  # only for adam
+    scheduler:  # only for splm
+        use_scheduler: true
+        scheduler_name: step_beta  # currently only step_beta is supported
+        gamma: 10  # for step_beta only
+        step_size: 4  # for step_beta only

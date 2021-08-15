@@ -1,5 +1,5 @@
 # models
-FF_MNIST_CLASSIFIER = 'FeedForwardMNISTClassifier'
+FF_MNIST_CLASSIFIER = 'mlp'
 VGG11_BN = 'vgg11_bn'
 RESNET18 = 'resnet18'
 

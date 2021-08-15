@@ -57,5 +57,7 @@ sh run_batch.sh experiments/batches/<BATCH_DIR>
 Reviewing results is under
 ```
 experiments/results/<BATCH_DIR>/<CONFIG_NAME>
-
 ```
+
+
+## Supported experiments
