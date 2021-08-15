@@ -8,3 +8,6 @@ class FeedForwardMNISTClassifier(nn.Module):
         super(FeedForwardMNISTClassifier, self).__init__()
         self.num_classes = 10
         self.model = FCNet(dims=[28 * 28, 32, num_classes], activation=activation)
+
+    def forward(self, x):
+        return self.model(x.view(-1, 28 * 28))

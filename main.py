@@ -105,7 +105,7 @@ def init_results_dir(params: dict, config_path):
     :param config_path: PosixPath
     :return:
     """
-    experiment_name = f"{params['model']['model_name']}_{params['optim']['optimizer']}_{params['data']['dataset']}__{get_time_str()}"
+    experiment_name = f"{config_path.stem}__{get_time_str()}"
     results_dir = EXPERIMENTS_RESULTS_DIR / config_path.parent.name / experiment_name
     os.makedirs(str(results_dir))
     with open(f'{results_dir}/config.yml', 'w') as f:
@@ -114,15 +114,15 @@ def init_results_dir(params: dict, config_path):
     return results_dir
 
 
-def init_model(params: dict):
+def init_model(params: dict, num_classes):
     model_name = params['model']['model_name']
 
     if model_name == FF_MNIST_CLASSIFIER:
-        return FeedForwardMNISTClassifier(activation=params['model']['activation'], num_classes=params['model']['num_classes'])
+        return FeedForwardMNISTClassifier(activation=params['model']['activation'], num_classes=num_classes)
     elif model_name == VGG11_BN:
-        return vgg11_bn(pretrained=params['model']['pretrained'], num_classes=params['model']['num_classes'])
+        return vgg11_bn(pretrained=params['model']['pretrained'], num_classes=num_classes)
     elif model_name == RESNET18:
-        return resnet18(pretrained=params['model']['pretrained'], num_classes=params['model']['num_classes'])
+        return resnet18(pretrained=params['model']['pretrained'], num_classes=num_classes)
     else:
         raise RuntimeError(f'Model "{model_name}" is not supported. Supported models are: {SUPPORTED_MODELS}.')
 
@@ -143,7 +143,7 @@ def main():
     results_dir = init_results_dir(params, args.file)
     loss_fn = init_loss(params)
     train_loader, eval_loader = init_data(params)
-    model = init_model(params)
+    model = init_model(params, num_classes=len(getattr(train_loader.dataset, 'classes')))
     if torch.cuda.is_available() and params['general']['use_cuda']:
         model.to('cuda')
     optimizer, scheduler = init_optim(params, model)

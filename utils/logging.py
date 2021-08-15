@@ -27,12 +27,13 @@ def plot_metrics(metrics, results_dir: PosixPath, delimiter='_'):
         ax.set_ylabel(metric)
         ax.legend()
 
-        ax2 = ax.twinx()
-        ax2.semilogy(metrics['beta'], color="black")
-        ax2.set_ylabel('beta')
+        if 'beta' in metrics:
+            ax2 = ax.twinx()
+            ax2.semilogy(metrics['beta'], color="black")
+            ax2.set_ylabel('beta')
 
         plt.title(f'{results_dir.name}\n{metric} vs. epochs')
-        plt.savefig(f'{results_dir.name}/{metric}_vs_epochs.png')
+        plt.savefig(f'{results_dir}/{metric}_vs_epochs.png')
         plt.clf()
 
         # vs. time
@@ -46,17 +47,18 @@ def plot_metrics(metrics, results_dir: PosixPath, delimiter='_'):
         ax.set_ylabel(metric)
         ax.legend()
 
-        ax2 = ax.twinx()
-        ax2.semilogy(times, metrics['beta'], color="black")
-        ax2.set_ylabel('beta')
+        if 'beta' in metrics:
+            ax2 = ax.twinx()
+            ax2.semilogy(times, metrics['beta'], color="black")
+            ax2.set_ylabel('beta')
 
         plt.title(f'{results_dir.name}\n{metric} vs. time')
-        plt.savefig(f'{results_dir.name}/{metric}_vs_time.png')
+        plt.savefig(f'{results_dir}/{metric}_vs_time.png')
         plt.clf()
 
 
 def plot_overflow(results_dir: PosixPath):
-    with open(f'{results_dir.name}/overflow.txt', 'w') as f:
+    with open(f'{results_dir}/overflow.txt', 'w') as f:
         f.write('Overflow happened.')
 
 

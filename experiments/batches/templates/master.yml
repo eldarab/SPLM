@@ -12,10 +12,9 @@ model:
     pretrained: false  # for vgg11_bn, resnet18
     activation: Softplus  # for mlp only. Due to mathematical reasons, only smooth and convex activations are supported.
     loss: hinge  # hinge / MultiMarginLoss / CE
-    num_classes: 10
 optim:
     batch_size: 1000
-    epochs: 10
+    epochs: 5
     optimizer: splm  # splm / adam
     K: 50  # only for splm
     beta: 10  # only for splm
