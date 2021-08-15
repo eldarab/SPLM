@@ -8,6 +8,7 @@ import pandas as pd
 import yaml
 
 
+### THIS IS DEPRECATED BUT STILL HERE FOR DEOMSTRATION REASONS ###
 def extract_results(root_dir='figs'):
     successful_experiments = {}
     failed_experiments = {}

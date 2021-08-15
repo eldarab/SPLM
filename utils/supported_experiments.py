@@ -1,10 +1,10 @@
 # models
-FF_MNIST_CLASSIFIER = 'mlp'
+MLP = 'mlp'
 VGG11_BN = 'vgg11_bn'
 RESNET18 = 'resnet18'
 
 SUPPORTED_MODELS = {
-    FF_MNIST_CLASSIFIER,
+    MLP,
     VGG11_BN,
     RESNET18
 }

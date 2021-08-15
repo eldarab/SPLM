@@ -117,7 +117,7 @@ def init_results_dir(params: dict, config_path):
 def init_model(params: dict, num_classes):
     model_name = params['model']['model_name']
 
-    if model_name == FF_MNIST_CLASSIFIER:
+    if model_name == MLP:
         return FeedForwardMNISTClassifier(activation=params['model']['activation'], num_classes=num_classes)
     elif model_name == VGG11_BN:
         return vgg11_bn(pretrained=params['model']['pretrained'], num_classes=num_classes)
