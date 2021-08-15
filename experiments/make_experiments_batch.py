@@ -1,11 +1,9 @@
 import argparse
 import os
 
-import yaml
 import numpy as np
-import pandas as pd
+import yaml
 
-from utils.logging import get_time_str
 from utils.paths import EXPERIMENTS_BATCHES_DIR
 from utils.supported_experiments import MNIST, HINGE_LOSS, SPLM, MLP
 
