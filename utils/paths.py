@@ -1,6 +1,6 @@
 import pathlib
 
-PROJECT_NAME = 'SPLM2'
+PROJECT_NAME = 'SPLM'
 PROJECT_DIR = pathlib.Path.home() / PROJECT_NAME
 
 DATASETS_DIR = PROJECT_DIR / 'datasets'
