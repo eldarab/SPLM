@@ -6,7 +6,7 @@ from pathlib import Path, PosixPath
 import torch
 import torch.nn as nn
 import yaml
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision.transforms import transforms
@@ -66,6 +66,15 @@ def init_loss(params: dict):
         return nn.MultiMarginLoss(margin=margin)
     else:
         raise RuntimeError(f'Loss function "{loss}" is not supported. Supported losses are: {SUPPORTED_LOSSES}.')
+
+
+def init_metrics_fns():
+    def f1_score_fn(*args, **kwargs):
+        return f1_score(*args, average='micro', **kwargs)
+    return {
+        'accuracy': accuracy_score,
+        'f1': f1_score_fn
+    }
 
 
 def init_optim(params: dict, model):
@@ -157,7 +166,7 @@ def main():
             loss_fn=loss_fn,
             optimizer=optimizer,
             scheduler=scheduler,
-            metrics_fns={'accuracy': accuracy_score},
+            metrics_fns=init_metrics_fns(),
             params=params,
         )
         plot_metrics(metrics, results_dir)

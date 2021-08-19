@@ -12,11 +12,11 @@ def make_config_yml(yml_path, epochs=20, batch_size=1000, optimizer='splm', K=50
     config_dict = dict(
         data=dict(
             dataset=MNIST,
-            train_samples=60000,
-            eval_samples=10000
+            train_samples=6001,
+            eval_samples=1001
         ),
         general=dict(
-            seed=43,
+            seed=42,
             use_cuda=True
         ),
         model=dict(
@@ -56,7 +56,7 @@ def make_splm_mnist_hinge_mlp(batch_name, batch_sizes, Ks, betas):
             for beta in betas:
                 config_yml_name = f'batch_{bs}__K_{K}__beta_{beta}.yml'
                 config_yml_path = batch_dir_path / config_yml_name
-                make_config_yml(yml_path=str(config_yml_path), epochs=20, batch_size=bs, optimizer=SPLM, K=K, beta=beta)
+                make_config_yml(yml_path=str(config_yml_path), epochs=50, batch_size=bs, optimizer=SPLM, K=K, beta=beta)
 
     return batch_dir_path
 
@@ -64,9 +64,9 @@ def make_splm_mnist_hinge_mlp(batch_name, batch_sizes, Ks, betas):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment_batch_name', type=str, help='Experiments batch folder name to appear under experiments/batches/')
-    parser.add_argument('--batch_sizes', type=tuple, default=(10, 100, 10), help='tuple (start, stop, num) to create a linspace of batch_size.')
-    parser.add_argument('--Ks', type=tuple, default=(50, 100, 1), help='tuple (start, stop, num) to create a linspace of K.')
-    parser.add_argument('--betas', type=tuple, default=(20., 90., 8), help='tuple (10^start, 10^stop, num) to create a linspace of beta.')
+    parser.add_argument('--batch_sizes', type=tuple, default=(100, 101, 1), help='tuple (start, stop, num) to create a linspace of batch_size.')
+    parser.add_argument('--Ks', type=tuple, default=(6, 10, 5), help='tuple (start, stop, num) to create a linspace of K.')
+    parser.add_argument('--betas', type=tuple, default=(1000., 1001., 1), help='tuple (10^start, 10^stop, num) to create a linspace of beta.')
     args = parser.parse_args()
 
     batch_dir_path = make_splm_mnist_hinge_mlp(args.experiment_batch_name, args.batch_sizes, args.Ks, args.betas)

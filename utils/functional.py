@@ -8,7 +8,7 @@ def multiclass_hinge_loss(outputs: Tensor, targets: Tensor, margin=1., reduction
     num_classes = outputs.shape[1]
 
     # TODO to be revisited when PyTorch implement https://www.tensorflow.org/api_docs/python/tf/map_fn
-    loss = torch.tensor(0., device='cuda')
+    loss = torch.tensor(0., device=device)
     for x, y in zip(outputs, targets):
         loss += (torch.relu(margin + x - x[y]).sum() - margin)
     loss /= num_classes
@@ -101,13 +101,14 @@ def g_i_y_hat(output: Tensor, y_true: Tensor, y_hat: int):  # batch compatible v
 
 
 class MulticlassHingeLoss(nn.Module):
-    def __init__(self, margin=1., reduction='mean'):
+    def __init__(self, margin=1., reduction='mean', device='cuda'):
         super(MulticlassHingeLoss, self).__init__()
         self.margin = margin
+        self.device = device
         if reduction == 'mean' or reduction == 'sum':
             self.reduction = reduction
         else:
             raise RuntimeError(f'Unsupported reduction: "{reduction}"')
 
     def forward(self, inputs: Tensor, targets: Tensor) -> Tensor:
-        return multiclass_hinge_loss(inputs, targets, self.margin, self.reduction)
+        return multiclass_hinge_loss(inputs, targets, self.margin, self.reduction, self.device)
